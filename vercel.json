@@ -1,5 +1,13 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/admin-login", "destination": "/admin-login.html" },
+    { "source": "/admin-login/", "destination": "/admin-login.html" },
+    { "source": "/admin-index", "destination": "/admin-index.html" },
+    { "source": "/admin-index/", "destination": "/admin-index.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/admin/", "destination": "/admin.html" }
+  ]
 }
