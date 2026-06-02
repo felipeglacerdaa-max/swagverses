@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Painel Administrativo | SwagVerse's</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .login-container {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 400px;
+        padding: 40px;
+      }
+
+      .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .logo {
+        font-size: 42px;
+        margin-bottom: 16px;
+      }
+
+      .login-header h1 {
+        font-size: 28px;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+      }
+
+      .login-header p,
+      .login-footer {
+        color: #6b7280;
+        font-size: 14px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #1a1a1a;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: all 0.3s ease;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #ff006e;
+        box-shadow: 0 0 0 3px rgba(255, 0, 110, 0.1);
+      }
+
+      .form-options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        font-size: 14px;
+      }
+
+      .remember-me {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .remember-me input {
+        width: auto;
+      }
+
+      .forgot-password {
+        color: #ff006e;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .login-button {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #ff006e, #00d9ff);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+
+      .login-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(255, 0, 110, 0.3);
+      }
+
+      .login-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .error-message,
+      .success-message {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        display: none;
+      }
+
+      .error-message {
+        background-color: #fee2e2;
+        color: #ef4444;
+        border-left: 4px solid #ef4444;
+      }
+
+      .success-message {
+        background-color: #d1fae5;
+        color: #10b981;
+        border-left: 4px solid #10b981;
+      }
+
+      .error-message.show,
+      .success-message.show {
+        display: block;
+      }
+
+      .login-footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 12px;
+        color: #9ca3af;
+      }
+
+      .loading-spinner {
+        display: inline-block;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: currentColor;
+        margin-right: 8px;
+        animation: loading-pulse 1s infinite;
+      }
+
+      @keyframes loading-pulse {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 1; }
+      }
+
+      @media (max-width: 480px) {
+        .login-container {
+          padding: 30px 20px;
+        }
+
+        .login-header h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-header">
+        <div class="logo">SV</div>
+        <h1>Painel Administrativo</h1>
+        <p>SwagVerse's</p>
+      </div>
+
+      <div class="error-message" id="errorMessage"></div>
+      <div class="success-message" id="successMessage"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Senha</label>
+          <input type="password" id="password" placeholder="Digite sua senha" autocomplete="current-password" required />
+        </div>
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" id="rememberMe" />
+            <span>Lembrar-me</span>
+          </label>
+          <a class="forgot-password" onclick="resetPassword()">Esqueceu a senha?</a>
+        </div>
+        <button type="submit" class="login-button" id="loginBtn">Entrar</button>
+      </form>
+
+      <div class="login-footer">© 2026 SwagVerse's. Todos os direitos reservados.</div>
+    </div>
+
+    <script>
+      (() => {
+      const SUPABASE_URL = 'https://nfxwzpkdjzucmpbgbmsp.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5meHd6cGtkanp1Y21wYmdibXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDAyNDUsImV4cCI6MjA5NTk3NjI0NX0.ZyEe2NIFyzxketUoPPboUSRTxyYK1c4iJ-FgLsyxHTA';
+
+      let supabase;
+
+      const loginForm = document.getElementById('loginForm');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const rememberMe = document.getElementById('rememberMe');
+      const loginBtn = document.getElementById('loginBtn');
+      const errorMsg = document.getElementById('errorMessage');
+      const successMsg = document.getElementById('successMessage');
+
+      async function waitForSupabase() {
+        let attempts = 0;
+        while (!window.supabase && attempts < 100) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+          attempts++;
+        }
+
+        if (!window.supabase) return false;
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        return true;
+      }
+
+      async function init() {
+        if (!await waitForSupabase()) {
+          showError('Erro ao carregar Supabase.');
+          return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          window.location.href = 'admin.html';
+          return;
+        }
+
+        const saved = localStorage.getItem('rememberedEmail');
+        if (saved) {
+          emailInput.value = saved;
+          rememberMe.checked = true;
+        }
+
+        loginForm.addEventListener('submit', handleLogin);
+      }
+
+      async function handleLogin(event) {
+        event.preventDefault();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        clearMessages();
+        if (!email || !password) return showError('Preencha todos os campos.');
+
+        showLoading();
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+          if (error) throw new Error(error.message);
+          if (!data.session) throw new Error('Login nao retornou sessao do Supabase.');
+
+          if (rememberMe.checked) localStorage.setItem('rememberedEmail', email);
+          else localStorage.removeItem('rememberedEmail');
+
+          showSuccess('Login realizado. Redirecionando...');
+          setTimeout(() => window.location.href = 'admin.html', 800);
+        } catch (error) {
+          showError(error.message);
+          hideLoading();
+        }
+      }
+
+      function showError(message) {
+        errorMsg.textContent = message;
+        errorMsg.classList.add('show');
+        successMsg.classList.remove('show');
+      }
+
+      function showSuccess(message) {
+        successMsg.textContent = message;
+        successMsg.classList.add('show');
+        errorMsg.classList.remove('show');
+      }
+
+      function clearMessages() {
+        errorMsg.classList.remove('show');
+        successMsg.classList.remove('show');
+      }
+
+      function showLoading() {
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<span class="loading-spinner"></span>Entrando...';
+      }
+
+      function hideLoading() {
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Entrar';
+      }
+
+      async function resetPassword() {
+        const email = emailInput.value.trim();
+        if (!email) return showError('Insira seu e-mail.');
+
+        showLoading();
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/admin-login.html'
+        });
+
+        if (error) showError(error.message);
+        else showSuccess('E-mail enviado. Verifique sua caixa.');
+        hideLoading();
+      }
+
+      window.resetPassword = resetPassword;
+
+      document.addEventListener('DOMContentLoaded', init);
+      })();
+    </script>
+  </body>
+</html>

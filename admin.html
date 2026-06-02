@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel Administrativo | SwagVerse's</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body class="admin-body">
+    <div class="admin-container">
+      <!-- Sidebar -->
+      <aside class="admin-sidebar">
+        <div class="admin-logo">
+          <span class="logo-icon">SV</span>
+          <span class="logo-text">SwagVerse's ADM</span>
+        </div>
+        
+        <nav class="admin-nav">
+          <button class="nav-item active" data-tab="dashboard">
+            <span class="nav-icon">📊</span>
+            Dashboard
+          </button>
+          <button class="nav-item" data-tab="products">
+            <span class="nav-icon">👕</span>
+            Produtos
+          </button>
+          <button class="nav-item" data-tab="prices">
+            <span class="nav-icon">💰</span>
+            Preços
+          </button>
+          <button class="nav-item" data-tab="stock">
+            <span class="nav-icon">📦</span>
+            Estoque
+          </button>
+          <button class="nav-item" data-tab="orders">
+            <span class="nav-icon">🛒</span>
+            Pedidos
+          </button>
+          <button class="nav-item" data-tab="promotions">
+            <span class="nav-icon">🎯</span>
+            Promoções
+          </button>
+          <button class="nav-item" data-tab="payments">
+            <span class="nav-icon">💳</span>
+            Pagamentos
+          </button>
+          <button class="nav-item" data-tab="announcements">
+            <span class="nav-icon">📢</span>
+            Anúncios
+          </button>
+        </nav>
+
+        <button class="logout-btn" id="logoutBtn">
+          <span class="nav-icon">🚪</span>
+          Sair
+        </button>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="admin-main">
+        <!-- Header -->
+        <header class="admin-header">
+          <div class="header-title">
+            <h1 id="pageTitle">Dashboard</h1>
+            <p id="pageSubtitle">Visão geral do seu negócio</p>
+          </div>
+          <div class="header-info">
+            <span class="user-name">Administrador</span>
+            <span class="timestamp" id="timestamp"></span>
+          </div>
+        </header>
+
+        <!-- Tab Content -->
+        <main class="admin-content">
+          <!-- Dashboard Tab -->
+          <section id="dashboard" class="tab-content active">
+            <div class="dashboard-grid">
+              <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-info">
+                  <h3>Total de Pedidos</h3>
+                  <p class="stat-value" id="totalOrders">0</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">💵</div>
+                <div class="stat-info">
+                  <h3>Receita Total</h3>
+                  <p class="stat-value" id="totalRevenue">R$ 0,00</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">📦</div>
+                <div class="stat-info">
+                  <h3>Itens em Estoque</h3>
+                  <p class="stat-value" id="totalStock">0</p>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-info">
+                  <h3>Aguardando Pagamento</h3>
+                  <p class="stat-value" id="pendingPayments">0</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Products Tab -->
+          <section id="products" class="tab-content">
+            <div class="tab-header">
+              <h2>Gerenciar Produtos</h2>
+              <button class="btn btn-primary" id="addProductBtn">+ Adicionar Produto</button>
+            </div>
+
+            <div class="product-categories">
+              <button class="category-btn active" data-category="blusa">Blusas</button>
+              <button class="category-btn" data-category="blusa-frio">Blusa de Frio</button>
+              <button class="category-btn" data-category="bone">Bones</button>
+              <button class="category-btn" data-category="camisa">Camisas</button>
+            </div>
+
+            <div class="products-grid" id="productsGrid">
+              <!-- Produtos serão renderizados aqui -->
+            </div>
+          </section>
+
+          <!-- Product Form Modal -->
+          <div class="modal" id="productModal">
+            <div class="modal-content">
+              <span class="close">&times;</span>
+              <h2 id="modalTitle">Adicionar Produto</h2>
+              
+              <form id="productForm" class="form-grid">
+                <input type="hidden" id="productId" value="">
+                
+                <div class="form-group">
+                  <label>Nome do Produto</label>
+                  <input type="text" id="productName" required placeholder="Ex: Blusa Oversized Preta">
+                </div>
+
+                <div class="form-group">
+                  <label>Categoria</label>
+                  <select id="productCategory" required>
+                    <option value="">Selecione uma categoria</option>
+                    <option value="blusa">Blusa</option>
+                    <option value="blusa-frio">Blusa de Frio</option>
+                    <option value="bone">Bone</option>
+                    <option value="camisa">Camisa</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Descrição</label>
+                  <textarea id="productDescription" placeholder="Descrição do produto" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label>Imagem (URL)</label>
+                  <input type="url" id="productImage" placeholder="https://exemplo.com/imagem.jpg">
+                </div>
+
+                <div class="form-group">
+                  <label>Preço (R$)</label>
+                  <input type="number" id="productPrice" required step="0.01" placeholder="0.00">
+                </div>
+
+                <div class="form-group">
+                  <label>Estoque</label>
+                  <input type="number" id="productStock" required min="0" placeholder="0">
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary" id="cancelProductBtn">Cancelar</button>
+                  <button type="submit" class="btn btn-primary">Salvar Produto</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Prices Tab -->
+          <section id="prices" class="tab-content">
+            <div class="tab-header">
+              <h2>Gerenciar Preços</h2>
+            </div>
+
+            <div class="prices-container" id="pricesContainer">
+              <!-- Preços serão renderizados aqui -->
+            </div>
+          </section>
+
+          <!-- Stock Tab -->
+          <section id="stock" class="tab-content">
+            <div class="tab-header">
+              <h2>Controle de Estoque</h2>
+            </div>
+
+            <div class="stock-table-container">
+              <table class="stock-table">
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th>Estoque Atual</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                  <!-- Estoque será renderizado aqui -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Stock Update Modal -->
+            <div class="modal" id="stockModal">
+              <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Atualizar Estoque</h2>
+                
+                <form id="stockForm">
+                  <input type="hidden" id="stockProductId" value="">
+                  
+                  <div class="form-group">
+                    <label>Quantidade Atual</label>
+                    <p id="currentStockDisplay" style="font-weight: bold; font-size: 18px;"></p>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Nova Quantidade</label>
+                    <input type="number" id="newStockQuantity" required min="0" placeholder="0">
+                  </div>
+
+                  <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelStockBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Atualizar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <!-- Orders Tab -->
+          <section id="orders" class="tab-content">
+            <div class="tab-header">
+              <h2>Gerenciar Pedidos</h2>
+            </div>
+
+            <div class="orders-filter">
+              <input type="text" id="orderSearch" placeholder="Buscar por cliente, email, telefone ou CPF...">
+            </div>
+
+            <div class="orders-table-container">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>ID Pedido</th>
+                    <th>Cliente</th>
+                    <th>Email</th>
+                    <th>Telefone</th>
+                    <th>CPF</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                  <!-- Pedidos serão renderizados aqui -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Order Details Modal -->
+            <div class="modal" id="orderModal">
+              <div class="modal-content order-modal-content">
+                <span class="close">&times;</span>
+                <h2>Detalhes do Pedido</h2>
+                
+                <div id="orderDetails" class="order-details-container">
+                  <!-- Detalhes serão renderizados aqui -->
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary" id="closeOrderBtn">Fechar</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Promotions Tab -->
+          <section id="promotions" class="tab-content">
+            <div class="tab-header">
+              <h2>Gerenciar Promoções</h2>
+              <button class="btn btn-primary" id="addPromotionBtn">+ Adicionar Promoção</button>
+            </div>
+
+            <div class="promotions-grid" id="promotionsGrid">
+              <!-- Promoções serão renderizadas aqui -->
+            </div>
+
+            <!-- Promotion Modal -->
+            <div class="modal" id="promotionModal">
+              <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="promotionModalTitle">Adicionar Promoção</h2>
+                
+                <form id="promotionForm" class="form-grid">
+                  <input type="hidden" id="promotionId" value="">
+                  
+                  <div class="form-group">
+                    <label>Título da Promoção</label>
+                    <input type="text" id="promotionTitle" required placeholder="Ex: Black Friday 50% OFF">
+                  </div>
+
+                  <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="promotionDescription" placeholder="Descreva a promoção" rows="3"></textarea>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Imagem (URL)</label>
+                    <input type="url" id="promotionImage" placeholder="https://exemplo.com/imagem.jpg">
+                  </div>
+
+                  <div class="form-group">
+                    <label>Data de Início</label>
+                    <input type="date" id="promotionStartDate" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Data de Término</label>
+                    <input type="date" id="promotionEndDate" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label>
+                      <input type="checkbox" id="promotionActive">
+                      Ativa
+                    </label>
+                  </div>
+
+                  <div class="form-actions" style="grid-column: 1/-1;">
+                    <button type="button" class="btn btn-secondary" id="cancelPromotionBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Promoção</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <!-- Payments Tab -->
+          <section id="payments" class="tab-content">
+            <div class="tab-header">
+              <h2>Gerenciar Pagamentos</h2>
+            </div>
+
+            <div class="payments-filters">
+              <button class="filter-btn active" data-status="all">Todos</button>
+              <button class="filter-btn" data-status="pending">Aguardando</button>
+              <button class="filter-btn" data-status="paid">Pago</button>
+              <button class="filter-btn" data-status="preparing">Em Separação</button>
+              <button class="filter-btn" data-status="shipped">Enviado</button>
+              <button class="filter-btn" data-status="delivered">Entregue</button>
+              <button class="filter-btn" data-status="failed">Falha</button>
+            </div>
+
+            <div class="payments-table-container">
+              <table class="payments-table">
+                <thead>
+                  <tr>
+                    <th>ID Pedido</th>
+                    <th>Cliente</th>
+                    <th>CPF</th>
+                    <th>Valor</th>
+                    <th>Método</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentsTableBody">
+                  <!-- Pagamentos serão renderizados aqui -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Payment/Status Update Modal -->
+            <div class="modal" id="paymentModal">
+              <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Atualizar Status do Pedido</h2>
+                
+                <form id="paymentForm">
+                  <input type="hidden" id="paymentOrderId" value="">
+                  
+                  <div class="form-group">
+                    <label>Status do Pedido</label>
+                    <select id="paymentStatus" required>
+                      <option value="pending">Aguardando Pagamento</option>
+                      <option value="paid">Pago</option>
+                      <option value="preparing">Em Separação</option>
+                      <option value="shipped">Enviado</option>
+                      <option value="delivered">Entregue</option>
+                      <option value="failed">Falha / Cancelado</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="paymentNotes" placeholder="Adicionar observação..." rows="3"></textarea>
+                  </div>
+
+                  <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelPaymentBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <!-- Announcements Tab -->
+          <section id="announcements" class="tab-content">
+            <div class="tab-header">
+              <h2>Gerenciar Anúncios</h2>
+              <button class="btn btn-primary" id="addAnnouncementBtn">+ Adicionar Anúncio</button>
+            </div>
+
+            <div class="announcements-container" id="announcementsContainer">
+              <!-- Anúncios serão renderizados aqui -->
+            </div>
+
+            <!-- Announcement Modal -->
+            <div class="modal" id="announcementModal">
+              <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="announcementModalTitle">Adicionar Anúncio</h2>
+                
+                <form id="announcementForm" class="form-grid">
+                  <input type="hidden" id="announcementId" value="">
+                  
+                  <div class="form-group">
+                    <label>Texto do Anúncio</label>
+                    <input type="text" id="announcementText" required placeholder="Ex: Drop 06 liberado" maxlength="100">
+                  </div>
+
+                  <div class="form-group">
+                    <label>Posição</label>
+                    <select id="announcementPosition" required>
+                      <option value="1">Anúncio 1</option>
+                      <option value="2">Anúncio 2</option>
+                      <option value="3">Anúncio 3</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>
+                      <input type="checkbox" id="announcementActive">
+                      Ativo
+                    </label>
+                  </div>
+
+                  <div class="form-actions" style="grid-column: 1/-1;">
+                    <button type="button" class="btn btn-secondary" id="cancelAnnouncementBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Anúncio</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="admin.js"></script>
+  </body>
+</html>

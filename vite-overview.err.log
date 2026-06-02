@@ -1,0 +1,31 @@
+[2m14:05:56[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to parse source for import analysis because the content contains invalid JS syntax. If you are using JSX, make sure to name the file with the .jsx or .tsx extension.
+[2m14:05:56[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to parse source for import analysis because the content contains invalid JS syntax. If you are using JSX, make sure to name the file with the .jsx or .tsx extension.[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/Atendio - Comercial/Documents/GitHub/swagverses/script.js[39m:3:39
+[33m  2  |  const mobileNav = document.getElementById('mobileNav');
+  3  |    <a href="#collections">Coleções</a>
+  4  |    <a href="#featured">Destaques</a>
+     |  ^
+  5  |    <a href="#about">Sobre</a>
+  6  |    <a href="#contact">Contato</a>[39m
+      at TransformPluginContext._formatError (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at TransformPluginContext.transform (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64259:14)
+      at async PluginContainer.transform (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+[2m14:05:56[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to parse source for import analysis because the content contains invalid JS syntax. If you are using JSX, make sure to name the file with the .jsx or .tsx extension.[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/Atendio - Comercial/Documents/GitHub/swagverses/script.js[39m:3:39
+[33m  2  |  const mobileNav = document.getElementById('mobileNav');
+  3  |    <a href="#collections">Coleções</a>
+  4  |    <a href="#featured">Destaques</a>
+     |  ^
+  5  |    <a href="#about">Sobre</a>
+  6  |    <a href="#contact">Contato</a>[39m
+      at TransformPluginContext._formatError (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at TransformPluginContext.transform (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64259:14)
+      at async PluginContainer.transform (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///C:/Users/Atendio%20-%20Comercial/Documents/GitHub/swagverses/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)

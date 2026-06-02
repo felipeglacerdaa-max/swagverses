@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel Administrativo - SwagVerse's</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        color: white;
+        margin-bottom: 50px;
+      }
+
+      .header h1 {
+        font-size: 48px;
+        margin-bottom: 10px;
+        background: linear-gradient(135deg, #ff006e, #00d9ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .header p {
+        font-size: 18px;
+        color: #ccc;
+        margin-bottom: 20px;
+      }
+
+      .version {
+        display: inline-block;
+        background: rgba(255, 0, 110, 0.1);
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid #ff006e;
+        color: #ff006e;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .card-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+      }
+
+      .card-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #1a1a1a;
+      }
+
+      .card-description {
+        font-size: 14px;
+        color: #6b7280;
+        margin-bottom: 16px;
+        flex: 1;
+      }
+
+      .card-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #ff006e, #00d9ff);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        width: fit-content;
+        margin-bottom: 12px;
+      }
+
+      .card-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #ff006e;
+        font-weight: 600;
+        font-size: 14px;
+        margin-top: auto;
+        text-decoration: none;
+        transition: gap 0.3s ease;
+      }
+
+      .card-link:hover {
+        gap: 12px;
+      }
+
+      .section {
+        margin-bottom: 60px;
+      }
+
+      .section-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .section-title span {
+        font-size: 32px;
+      }
+
+      .feature-list {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 24px;
+        margin-top: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .feature-list h3 {
+        color: white;
+        margin-bottom: 16px;
+        font-size: 16px;
+      }
+
+      .feature-list ul {
+        list-style: none;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+      }
+
+      .feature-list li {
+        color: #ccc;
+        font-size: 14px;
+        padding-left: 24px;
+        position: relative;
+      }
+
+      .feature-list li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: #10b981;
+        font-weight: 700;
+      }
+
+      .button {
+        background: linear-gradient(135deg, #ff006e, #00d9ff);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(255, 0, 110, 0.3);
+      }
+
+      .button-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .cta-section {
+        background: linear-gradient(135deg, rgba(255, 0, 110, 0.1), rgba(0, 217, 255, 0.1));
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        border: 1px solid rgba(255, 0, 110, 0.3);
+      }
+
+      .cta-section h2 {
+        color: white;
+        font-size: 28px;
+        margin-bottom: 16px;
+      }
+
+      .cta-section p {
+        color: #ccc;
+        margin-bottom: 24px;
+        font-size: 16px;
+      }
+
+      .cta-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .footer {
+        text-align: center;
+        color: #999;
+        font-size: 12px;
+        margin-top: 60px;
+        padding-top: 40px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .warning {
+        background: rgba(255, 193, 7, 0.1);
+        border-left: 4px solid #ffc107;
+        padding: 16px;
+        border-radius: 8px;
+        color: #ffeb3b;
+        margin-top: 20px;
+        font-size: 14px;
+      }
+
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 32px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .cta-buttons {
+          flex-direction: column;
+        }
+
+        .cta-buttons a,
+        .cta-buttons button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <h1>🎯 Painel Administrativo</h1>
+        <p>SwagVerse's E-commerce Management</p>
+        <span class="version">v1.0 - Junho 2026</span>
+      </div>
+
+      <!-- Main Content -->
+
+      <!-- 1. Quick Start -->
+      <div class="section">
+        <div class="section-title">
+          <span>⚡</span> Início Rápido
+        </div>
+
+        <div class="grid">
+          <a href="admin-login.html" class="card">
+            <div class="card-icon">🔐</div>
+            <span class="card-badge">ESSENCIAL</span>
+            <div class="card-title">Acessar Painel</div>
+            <div class="card-description">
+              Página de login para autenticação. Use as credenciais: admin / admin123
+            </div>
+            <span class="card-link">Entrar no Painel →</span>
+          </a>
+
+          <a href="INICIO_RAPIDO.md" class="card">
+            <div class="card-icon">📖</div>
+            <span class="card-badge">RECOMENDADO</span>
+            <div class="card-title">Guia 5 Minutos</div>
+            <div class="card-description">
+              Comece agora com este guia rápido e didático em português.
+            </div>
+            <span class="card-link">Ler Guia →</span>
+          </a>
+
+          <a href="MANUAL_RAPIDO.md" class="card">
+            <div class="card-icon">📚</div>
+            <span class="card-badge">COMPLETO</span>
+            <div class="card-title">Manual Completo</div>
+            <div class="card-description">
+              Documentação passo-a-passo de todas as funcionalidades.
+            </div>
+            <span class="card-link">Ver Manual →</span>
+          </a>
+        </div>
+
+        <div class="warning">
+          ⚠️ <strong>Comece aqui:</strong> Leia INICIO_RAPIDO.md primeiro (5 minutos). Depois, acesse o painel admin-login.html.
+        </div>
+      </div>
+
+      <!-- 2. Main Features -->
+      <div class="section">
+        <div class="section-title">
+          <span>🚀</span> Funcionalidades Principais
+        </div>
+
+        <div class="feature-list">
+          <h3>📊 Dashboard</h3>
+          <ul>
+            <li>Total de Pedidos</li>
+            <li>Receita Total</li>
+            <li>Itens em Estoque</li>
+            <li>Pagamentos Pendentes</li>
+          </ul>
+        </div>
+
+        <div class="feature-list">
+          <h3>👕 Gerenciar Produtos</h3>
+          <ul>
+            <li>Adicionar produtos</li>
+            <li>Editar informações</li>
+            <li>Deletar produtos</li>
+            <li>4 Categorias: Blusa, Blusa de Frio, Bone, Camisa</li>
+            <li>Definir preços</li>
+            <li>Controlar estoque</li>
+          </ul>
+        </div>
+
+        <div class="feature-list">
+          <h3>💳 Gerenciar Pedidos e Pagamentos</h3>
+          <ul>
+            <li>Ver todos os pedidos</li>
+            <li>Dados completos do cliente</li>
+            <li>Telefone, Email, CEP</li>
+            <li>Itens e quantidades</li>
+            <li>Método de pagamento</li>
+            <li>Status de pagamento</li>
+          </ul>
+        </div>
+
+        <div class="feature-list">
+          <h3>🎯 Promoções e Anúncios</h3>
+          <ul>
+            <li>Criar promoções</li>
+            <li>Definir período ativo</li>
+            <li>Adicionar imagens</li>
+            <li>Gerenciar 3 anúncios</li>
+            <li>Sincronizar com site</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3. Documentation -->
+      <div class="section">
+        <div class="section-title">
+          <span>📚</span> Documentação
+        </div>
+
+        <div class="grid">
+          <a href="README_ADMIN.md" class="card">
+            <div class="card-icon">📋</div>
+            <div class="card-title">README Admin</div>
+            <div class="card-description">
+              Documentação técnica completa com explicação de cada funcionalidade.
+            </div>
+            <span class="card-link">Ler Docs →</span>
+          </a>
+
+          <a href="admin-integration.js" class="card">
+            <div class="card-icon">⚙️</div>
+            <div class="card-title">Integração</div>
+            <div class="card-description">
+              10 exemplos de como integrar com seu site principal. Código pronto para copiar.
+            </div>
+            <span class="card-link">Ver Exemplos →</span>
+          </a>
+
+          <a href="SECURITY.md" class="card">
+            <div class="card-icon">🔒</div>
+            <div class="card-title">Segurança</div>
+            <div class="card-description">
+              Guia completo de segurança para produção. Práticas recomendadas e implementações.
+            </div>
+            <span class="card-link">Ler Segurança →</span>
+          </a>
+
+          <a href="ESTRUTURA_PROJETO.txt" class="card">
+            <div class="card-icon">📁</div>
+            <div class="card-title">Estrutura</div>
+            <div class="card-description">
+              Visualização completa da estrutura de arquivos e projeto.
+            </div>
+            <span class="card-link">Ver Estrutura →</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 4. Technical Files -->
+      <div class="section">
+        <div class="section-title">
+          <span>💻</span> Arquivos Técnicos
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <div class="card-icon">📄</div>
+            <div class="card-title">admin.html</div>
+            <div class="card-description">
+              Interface principal com 8 abas completas e totalmente responsiva.
+            </div>
+            <span class="card-link">Arquivo de Interface</span>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">🎨</div>
+            <div class="card-title">admin.css</div>
+            <div class="card-description">
+              Estilos profissionais e responsivos para todos os dispositivos.
+            </div>
+            <span class="card-link">Arquivo de Estilos</span>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">⚙️</div>
+            <div class="card-title">admin.js</div>
+            <div class="card-description">
+              Lógica completa com gerenciamento de dados, filtros e validações.
+            </div>
+            <span class="card-link">Arquivo de Lógica</span>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">🔐</div>
+            <div class="card-title">admin-login.html</div>
+            <div class="card-description">
+              Sistema de autenticação com verificação de credenciais e token.
+            </div>
+            <span class="card-link">Arquivo de Login</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. CTA Section -->
+      <div class="cta-section">
+        <h2>🎉 Está Pronto para Começar?</h2>
+        <p>
+          Você tem um painel administrativo profissional, responsivo e totalmente funcional.
+        </p>
+        <div class="cta-buttons">
+          <a href="admin-login.html" class="button">
+            🔐 Entrar no Painel
+          </a>
+          <a href="INICIO_RAPIDO.md" class="button button-secondary">
+            📖 Ler Guia Rápido
+          </a>
+        </div>
+      </div>
+
+      <!-- Features Summary -->
+      <div class="section">
+        <div class="section-title">
+          <span>✅</span> O Que Foi Criado
+        </div>
+
+        <div class="feature-list">
+          <h3>9 Arquivos Novos</h3>
+          <ul>
+            <li>admin-login.html - Sistema de Login</li>
+            <li>admin.html - Painel Principal (8 abas)</li>
+            <li>admin.css - Estilos Responsivos</li>
+            <li>admin.js - Lógica Completa</li>
+            <li>admin-integration.js - Exemplos de Integração</li>
+            <li>INICIO_RAPIDO.md - Guia 5 Minutos</li>
+            <li>MANUAL_RAPIDO.md - Manual Completo</li>
+            <li>README_ADMIN.md - Documentação Técnica</li>
+            <li>SECURITY.md - Guia de Segurança</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Credentials -->
+      <div class="section">
+        <div class="section-title">
+          <span>🔑</span> Credenciais de Acesso
+        </div>
+
+        <div class="feature-list">
+          <h3>Login Demo</h3>
+          <ul style="grid-template-columns: 1fr;">
+            <li><strong>Usuário:</strong> admin</li>
+            <li><strong>Senha:</strong> admin123</li>
+          </ul>
+        </div>
+
+        <div class="warning" style="margin-top: 16px;">
+          ⚠️ <strong>Para Produção:</strong> Mude as credenciais e implemente autenticação real no backend. Veja SECURITY.md.
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>
+          © 2026 SwagVerse's. Painel Administrativo v1.0 | Desenvolvido para gerenciar seu e-commerce
+        </p>
+        <p style="margin-top: 8px;">
+          📧 Contato | 🌐 Website | 📱 Mobile Responsive
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
