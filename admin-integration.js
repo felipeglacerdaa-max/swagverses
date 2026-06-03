@@ -1,4 +1,5 @@
 /* ===== EXEMPLO DE INTEGRAÇÃO - ADMIN COM SITE PRINCIPAL ===== */
+/* @deprecated Use src/supabase-client.js — dados 100% na nuvem (Supabase). */
 
 /**
  * Este arquivo mostra exemplos de como integrar a página de administração

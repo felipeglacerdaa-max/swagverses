@@ -1,3 +1,17 @@
+import {
+  createOrder,
+  fetchActiveAnnouncements,
+  fetchActiveProducts,
+  fetchFeaturedSection,
+  fetchOrdersByCpf,
+} from './src/supabase-client.js';
+import { CATALOG_FILTERS, DEFAULT_FEATURED_SECTION, normalizeProductForSite } from './src/catalog.js';
+import {
+  buildProductCardHtml,
+  filterProductsByAdminCategory,
+  sortProducts,
+} from './src/products-ui.js';
+
 const navToggle = document.getElementById('navToggle');
 const mobileNav = document.getElementById('mobileNav');
 navToggle.addEventListener('click', () => {
@@ -12,7 +26,6 @@ mobileNav.querySelectorAll('a').forEach((link) => {
   });
 });
 
-const filterButtons = document.querySelectorAll('.filter-btn');
 const openCart = document.getElementById('openCart');
 const closeCart = document.getElementById('closeCart');
 const cartDrawer = document.getElementById('cartDrawer');
@@ -65,17 +78,6 @@ const formatPhone = (value = '') => {
 
 const isImageUrl = (value = '') => /^(https?:\/\/|data:image\/)/i.test(String(value).trim());
 
-const readStorage = (key, fallback) => {
-  try {
-    const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : fallback;
-  } catch {
-    return fallback;
-  }
-};
-
-const writeStorage = (key, value) => localStorage.setItem(key, JSON.stringify(value));
-
 const getStatusLabel = (status) => ({
   pending: 'Aguardando pagamento',
   paid: 'Pago',
@@ -95,77 +97,179 @@ const renderProductImage = (product) => {
 
 // Produtos padrao (fallback caso admin nao tenha configurado)
 const defaultProducts = {
-  'heavy-hoodie': { id: 'heavy-hoodie', name: 'Hoodie Swag Core', price: 239.9, image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=80', description: 'Modelagem oversized, tecido pesado.' },
-  'archive-tee': { id: 'archive-tee', name: 'Camiseta Pulse', price: 99.9, image: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=900&q=80', description: 'Grafico exclusivo drop 06.' },
-  'canvas-cap': { id: 'canvas-cap', name: 'Snapback Vibe', price: 79.9, image: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=900&q=80', description: 'Ajuste snapback, aba plana.' },
-  'zip-hoodie': { id: 'zip-hoodie', name: 'Hoodie Neon Wave', price: 249.9, image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80', description: 'Ziper duplo, silhueta relaxada.' }
+  'heavy-hoodie': { id: 'heavy-hoodie', name: 'Hoodie Swag Core', price: 239.9, category: 'hoodie', image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=80', description: 'Modelagem oversized, tecido pesado.' },
+  'archive-tee': { id: 'archive-tee', name: 'Camiseta Pulse', price: 99.9, category: 'tee', image: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=900&q=80', description: 'Grafico exclusivo drop 06.' },
+  'canvas-cap': { id: 'canvas-cap', name: 'Snapback Vibe', price: 79.9, category: 'accessory', image: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=900&q=80', description: 'Ajuste snapback, aba plana.' },
+  'zip-hoodie': { id: 'zip-hoodie', name: 'Hoodie Neon Wave', price: 249.9, category: 'hoodie', image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80', description: 'Ziper duplo, silhueta relaxada.' }
 };
 
 // Inicializar produtos com os padroes
 const products = { ...defaultProducts };
 
-// Funcao para carregar produtos do admin (substitui produtos padrao pelas versoes do admin)
-function loadAdminPrices() {
-  const adminProducts = localStorage.getItem('mainSiteProducts');
-  if (adminProducts) {
-    try {
-      const adminData = JSON.parse(adminProducts);
-      // Limpar e recarregar todos os produtos do admin
-      Object.keys(products).forEach(id => delete products[id]);
-      Object.keys(adminData).forEach(id => {
-        const p = adminData[id];
-        products[id] = {
-          id: id,
-          name: p.name || 'Produto',
-          price: Number(p.price) || 0,
-          image: p.image || '',
-          description: p.description || '',
-          category: p.category || 'all'
-        };
-      });
-      console.log('✅ Produtos carregados do admin panel');
-    } catch (e) {
-      console.log('Info: Usando produtos padrao');
-    }
-  }
+function applyProductsList(list) {
+  Object.keys(products).forEach((id) => delete products[id]);
+  list.forEach((item) => {
+    const normalized = normalizeProductForSite({ ...item, id: item.id });
+    products[normalized.id] = normalized;
+  });
 }
 
-// Carregar produtos na inicializacao
-loadAdminPrices();
+function applyAnnouncements(list) {
+  list.forEach((announcement) => {
+    const element = document.getElementById(`announcement${announcement.position}`);
+    if (element) element.textContent = announcement.text;
+  });
+}
 
-// Recarregar produtos quando admin os atualizar
-window.addEventListener('admin-products-updated', () => {
-  loadAdminPrices();
-  console.log('🔄 Produtos atualizados do admin panel');
-  renderProductGrid();
-});
+let catalogFilter = 'all';
+let catalogSort = 'featured';
+let featuredSection = { ...DEFAULT_FEATURED_SECTION };
 
-// Renderizar grid de produtos
-function renderProductGrid() {
+const cardHelpers = { escapeHtml, renderProductImage };
+
+function applyFeaturedSection(section) {
+  featuredSection = { ...DEFAULT_FEATURED_SECTION, ...section };
+  const eyebrow = document.getElementById('shopEyebrow');
+  const title = document.getElementById('shopTitle');
+  if (eyebrow) eyebrow.textContent = featuredSection.eyebrow;
+  if (title) title.textContent = featuredSection.title;
+}
+
+function getFeaturedProducts() {
+  const ids = (featuredSection.productIds || []).map(String).filter(Boolean);
+  if (!ids.length) return getAllProducts().slice(0, 4);
+  return ids.map((id) => products[id]).filter(Boolean);
+}
+
+function getAllProducts() {
+  return Object.values(products);
+}
+
+function renderDropMarquee() {
+  const track = document.getElementById('dropsMarqueeTrack');
+  if (!track) return;
+
+  const list = getAllProducts();
+  if (!list.length) {
+    track.innerHTML = '<p class="drops-marquee__empty">Cadastre produtos no painel admin para exibir o drop.</p>';
+    return;
+  }
+
+  const cards = list
+    .map((product) => buildProductCardHtml(product, { ...cardHelpers, variant: 'marquee' }))
+    .join('');
+
+  track.innerHTML = `
+    <div class="drops-marquee__group">${cards}</div>
+    <div class="drops-marquee__group" aria-hidden="true">${cards}</div>
+  `;
+}
+
+function renderCatalog() {
+  const grid = document.getElementById('catalogGrid');
+  const filtersNav = document.getElementById('catalogFilters');
+  const countEl = document.getElementById('catalogCount');
+  const emptyEl = document.getElementById('catalogEmpty');
+  if (!grid || !filtersNav) return;
+
+  filtersNav.innerHTML = CATALOG_FILTERS.map(
+    (filter) => `
+      <button
+        type="button"
+        class="catalog-filter-btn${filter.id === catalogFilter ? ' active' : ''}"
+        data-filter="${filter.id}"
+        role="tab"
+        aria-selected="${filter.id === catalogFilter}"
+      >${escapeHtml(filter.label)}</button>
+    `
+  ).join('');
+
+  let list = filterProductsByAdminCategory(getAllProducts(), catalogFilter);
+  list = sortProducts(list, catalogSort);
+
+  if (countEl) {
+    countEl.textContent = `${list.length} ${list.length === 1 ? 'peca' : 'pecas'}`;
+  }
+  if (emptyEl) emptyEl.hidden = list.length > 0;
+
+  if (!list.length) {
+    grid.innerHTML = '';
+    attachCartButtonListeners();
+    return;
+  }
+
+  grid.innerHTML = list
+    .map((product) => buildProductCardHtml(product, cardHelpers))
+    .join('');
+
+  attachCartButtonListeners();
+}
+
+function renderFeaturedGrid() {
   const productGrid = document.getElementById('productGrid');
   if (!productGrid) return;
 
-  const productsArray = Object.values(products);
+  const list = getFeaturedProducts();
 
-  if (!productsArray.length) {
+  if (!list.length) {
     productGrid.innerHTML = '<p style="padding:40px 32px;color:var(--muted);">Nenhum produto cadastrado ainda.</p>';
     return;
   }
 
-  productGrid.innerHTML = productsArray.map(product => `
-    <article class="product-card" data-category="${escapeHtml(product.category || 'all')}">
-      <div class="product-image">${renderProductImage(product)}</div>
-      <div class="product-content">
-        <h3>${escapeHtml(product.name)}</h3>
-        <p class="product-price">R$ ${(Number(product.price) || 0).toFixed(2).replace('.', ',')}</p>
-        <p class="product-description">${escapeHtml(product.description || '')}</p>
-        <button class="quick-add add-to-cart" type="button" data-id="${escapeHtml(product.id)}">Adicionar</button>
-      </div>
-    </article>
-  `).join('');
+  productGrid.innerHTML = list
+    .map((product) => buildProductCardHtml(product, cardHelpers))
+    .join('');
 
-  // Reattach event listeners to new buttons
   attachCartButtonListeners();
+}
+
+const isCatalogPage = document.body.classList.contains('page-catalog');
+
+function renderAllProductViews() {
+  if (!isCatalogPage) renderDropMarquee();
+  renderCatalog();
+  if (!isCatalogPage) renderFeaturedGrid();
+}
+
+function initCatalogControls() {
+  document.getElementById('catalogFilters')?.addEventListener('click', (event) => {
+    const button = event.target.closest('.catalog-filter-btn');
+    if (!button) return;
+    catalogFilter = button.dataset.filter || 'all';
+    renderCatalog();
+  });
+
+  document.getElementById('catalogSort')?.addEventListener('change', (event) => {
+    catalogSort = event.target.value;
+    renderCatalog();
+  });
+}
+
+function initCatalogPageFromUrl() {
+  const filter = new URLSearchParams(window.location.search).get('filter');
+  if (filter && CATALOG_FILTERS.some((item) => item.id === filter)) {
+    catalogFilter = filter;
+  }
+}
+
+async function bootstrapSite() {
+  const remoteProducts = await fetchActiveProducts();
+
+  if (remoteProducts?.length) {
+    applyProductsList(remoteProducts);
+  }
+
+  if (isCatalogPage) {
+    initCatalogPageFromUrl();
+  } else {
+    const featured = await fetchFeaturedSection();
+    applyFeaturedSection(featured);
+  }
+
+  renderAllProductViews();
+
+  const announcements = await fetchActiveAnnouncements();
+  if (announcements?.length) applyAnnouncements(announcements);
 }
 
 function attachCartButtonListeners() {
@@ -185,9 +289,9 @@ function attachCartButtonListeners() {
   });
 }
 
-// Renderizar produtos na inicializacao
 document.addEventListener('DOMContentLoaded', () => {
-  renderProductGrid();
+  initCatalogControls();
+  bootstrapSite();
 });
 
 const cart = {
@@ -300,17 +404,12 @@ const buildOrder = () => {
   };
 };
 
-const saveOrderForAdmin = (order) => {
-  const orders = readStorage('admin_orders', []);
-  writeStorage('admin_orders', [order, ...orders]);
-
-  const payments = readStorage('admin_payments', {});
-  payments[order.id] = {
+const saveOrderForAdmin = async (order) => {
+  await createOrder({
+    ...order,
     status: 'pending',
-    notes: 'Pedido recebido pela loja.',
-    updatedAt: new Date().toISOString()
-  };
-  writeStorage('admin_payments', payments);
+    notes: 'Pedido recebido pela loja.'
+  });
 };
 
 const clearCheckout = () => {
@@ -322,10 +421,16 @@ const clearCheckout = () => {
   shippingResult.textContent = 'Insira o CEP para estimar o frete.';
 };
 
-const renderOrdersByCpf = (cpfDigits) => {
-  const orders = readStorage('admin_orders', [])
-    .filter((order) => onlyDigits(order.cpf || order.cpfFormatted) === cpfDigits);
-  const payments = readStorage('admin_payments', {});
+const renderOrdersByCpf = async (cpfDigits) => {
+  orderStatusResult.innerHTML = '<p>Buscando pedidos...</p>';
+  let orders;
+  try {
+    orders = await fetchOrdersByCpf(cpfDigits);
+  } catch (error) {
+    console.error(error);
+    orderStatusResult.innerHTML = '<p>Nao foi possivel consultar pedidos. Tente novamente em instantes.</p>';
+    return;
+  }
 
   if (!orders.length) {
     orderStatusResult.innerHTML = '<p>Nenhum pedido encontrado para este CPF.</p>';
@@ -333,19 +438,18 @@ const renderOrdersByCpf = (cpfDigits) => {
   }
 
   orderStatusResult.innerHTML = orders.map((order) => {
-    const payment = payments[order.id] || { status: 'pending', notes: '' };
     const items = (order.items || []).map((item) => `${escapeHtml(String(item.quantity))}x ${escapeHtml(item.name)}`).join(', ');
-    const statusLabel = getStatusLabel(payment.status);
+    const statusLabel = getStatusLabel(order.status);
     const dateStr = order.createdAt ? new Date(order.createdAt).toLocaleDateString('pt-BR') : '';
     return `
-      <article class="order-status-card" data-status="${escapeHtml(payment.status || 'pending')}">
+      <article class="order-status-card" data-status="${escapeHtml(order.status || 'pending')}">
         <div>
           <span>Pedido #${escapeHtml(order.id)}${dateStr ? ` &mdash; ${dateStr}` : ''}</span>
           <strong>${escapeHtml(statusLabel)}</strong>
         </div>
         <p>${items || 'Itens nao informados'}</p>
         <small>Total: ${formatCurrency(Number(order.total) || 0)}</small>
-        ${payment.notes ? `<small>Obs: ${escapeHtml(payment.notes)}</small>` : ''}
+        ${order.notes ? `<small>Obs: ${escapeHtml(order.notes)}</small>` : ''}
       </article>
     `;
   }).join('');
@@ -359,19 +463,6 @@ const toggleCart = (open) => {
 openCart.addEventListener('click', () => toggleCart(true));
 closeCart.addEventListener('click', () => toggleCart(false));
 backdrop.addEventListener('click', () => toggleCart(false));
-
-filterButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    filterButtons.forEach((item) => item.classList.remove('active'));
-    button.classList.add('active');
-
-    const filterValue = button.dataset.filter;
-    document.querySelectorAll('.product-card').forEach((card) => {
-      const matches = filterValue === 'all' || card.dataset.category === filterValue;
-      card.style.display = matches ? '' : 'none';
-    });
-  });
-});
 
 checkShipping.addEventListener('click', showShippingStatus);
 
@@ -392,17 +483,17 @@ checkoutPhone?.addEventListener('input', () => {
   }
 });
 
-orderStatusForm?.addEventListener('submit', (event) => {
+orderStatusForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
   const cpfDigits = onlyDigits(orderCpfSearch.value);
   if (cpfDigits.length !== 11) {
     orderStatusResult.innerHTML = '<p>Digite um CPF valido com 11 numeros.</p>';
     return;
   }
-  renderOrdersByCpf(cpfDigits);
+  await renderOrdersByCpf(cpfDigits);
 });
 
-checkoutButton.addEventListener('click', () => {
+checkoutButton.addEventListener('click', async () => {
   if (!Object.keys(cart.items).length) {
     alert('Adicione itens ao carrinho antes de finalizar a compra.');
     return;
@@ -420,10 +511,20 @@ checkoutButton.addEventListener('click', () => {
     return;
   }
   const order = buildOrder();
-  saveOrderForAdmin(order);
-  alert(`Pedido #${order.id} criado com sucesso! Consulte o andamento usando o CPF informado na secao "Pedidos".`);
-  clearCheckout();
-  toggleCart(false);
+  checkoutButton.disabled = true;
+  checkoutButton.textContent = 'Enviando...';
+  try {
+    await saveOrderForAdmin(order);
+    alert(`Pedido #${order.id} criado com sucesso! Consulte o andamento usando o CPF informado na secao "Pedidos".`);
+    clearCheckout();
+    toggleCart(false);
+  } catch (error) {
+    console.error(error);
+    alert('Nao foi possivel registrar o pedido. Verifique sua conexao e tente novamente.');
+  } finally {
+    checkoutButton.disabled = false;
+    checkoutButton.textContent = 'Finalizar compra';
+  }
 });
 
 const contactForm = document.getElementById('contactForm');

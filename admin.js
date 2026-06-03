@@ -1,6 +1,21 @@
-// ===== SUPABASE AUTH =====
-const SUPABASE_URL = 'https://nfxwzpkdjzucmpbgbmsp.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5meHd6cGtkanp1Y21wYmdibXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDAyNDUsImV4cCI6MjA5NTk3NjI0NX0.ZyEe2NIFyzxketUoPPboUSRTxyYK1c4iJ-FgLsyxHTA';
+import {
+  createOrder,
+  deleteAnnouncementById,
+  deleteProductById,
+  deletePromotionById,
+  fetchAllAnnouncementsForAdmin,
+  fetchAllOrdersForAdmin,
+  fetchAllProductsForAdmin,
+  fetchAllPromotionsForAdmin,
+  fetchFeaturedSectionForAdmin,
+  getSupabaseClient,
+  saveFeaturedSection,
+  updateOrderStatus,
+  upsertAnnouncements,
+  upsertProducts,
+  upsertPromotion,
+} from './src/supabase-client.js';
+import { DEFAULT_FEATURED_SECTION } from './src/catalog.js';
 
 let supabaseClient = null;
 let adminManager = null;
@@ -13,20 +28,8 @@ function money(value) {
   return `R$ ${(Number(value) || 0).toFixed(2).replace('.', ',')}`;
 }
 
-function loadSupabaseScript() {
-  return new Promise((resolve, reject) => {
-    if (window.supabase) return resolve();
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-}
-
 async function requireSupabaseAdmin() {
-  await loadSupabaseScript();
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabaseClient = await getSupabaseClient();
 
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
@@ -39,39 +42,94 @@ async function requireSupabaseAdmin() {
   return session;
 }
 
+const DEFAULT_PRODUCTS = [
+  { id: '1', name: 'Blusa Oversized Preta', category: 'blusa', description: 'Blusa oversized com modelagem confortavel', image: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=600', price: 129.9, stock: 15, createdAt: new Date().toISOString() },
+  { id: '2', name: 'Blusa Oversized Branca', category: 'blusa', description: 'Blusa oversized em branco off-white', image: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=600', price: 129.9, stock: 12, createdAt: new Date().toISOString() },
+  { id: '3', name: 'Jaqueta de Frio', category: 'blusa-frio', description: 'Jaqueta quentinha para dias frios', image: 'https://images.unsplash.com/photo-1548126032-079a0fb0099d?w=600', price: 249.9, stock: 8, createdAt: new Date().toISOString() },
+  { id: '4', name: 'Bone Snapback', category: 'bone', description: 'Bone em estilo snapback com ajuste livre', image: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600', price: 79.9, stock: 20, createdAt: new Date().toISOString() }
+];
+
+const DEFAULT_ANNOUNCEMENTS = [
+  { id: '1', text: 'Drop 06 liberado', position: '1', active: true },
+  { id: '2', text: 'Frete gratis acima de R$ 349', position: '2', active: true },
+  { id: '3', text: 'Troca facil em ate 7 dias', position: '3', active: true }
+];
+
 class AdminManager {
   constructor() {
-    this.products = this.load('products') || [];
-    this.orders = this.load('orders') || [];
-    this.promotions = this.load('promotions') || [];
-    this.announcements = this.load('announcements') || [];
-    this.payments = this.load('payments') || {};
+    this.products = [];
+    this.orders = [];
+    this.promotions = [];
+    this.announcements = [];
+    this.featuredSection = { ...DEFAULT_FEATURED_SECTION };
     this.currentTab = 'dashboard';
     this.currentCategory = 'blusa';
     this.currentPaymentFilter = 'all';
     this.init();
   }
 
-  load(key) {
-    try {
-      const data = localStorage.getItem(`admin_${key}`);
-      return data ? JSON.parse(data) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  save(key, data) {
-    localStorage.setItem(`admin_${key}`, JSON.stringify(data));
-  }
-
   init() {
-    this.loadDefaultData();
     this.bindEvents();
-    this.syncProductsToMainSite();
     this.updateDashboard();
     this.updateTimestamp();
     setInterval(() => this.updateTimestamp(), 1000);
+  }
+
+  async hydrateFromDatabase() {
+    try {
+      const [products, orders, announcements, promotions, featuredSection] = await Promise.all([
+        fetchAllProductsForAdmin(),
+        fetchAllOrdersForAdmin(),
+        fetchAllAnnouncementsForAdmin(),
+        fetchAllPromotionsForAdmin(),
+        fetchFeaturedSectionForAdmin(),
+      ]);
+      this.products = products;
+      this.orders = orders;
+      this.announcements = announcements;
+      this.promotions = promotions;
+      this.featuredSection = featuredSection;
+      await this.seedDefaultsIfEmpty();
+    } catch (error) {
+      console.error('Erro ao carregar dados do Supabase:', error);
+      this.notify('Nao foi possivel carregar dados. Execute supabase-schema.sql no projeto.');
+    }
+    this.updateDashboard();
+    this.refreshCurrentTab();
+  }
+
+  async seedDefaultsIfEmpty() {
+    if (!this.products.length) {
+      this.products = [...DEFAULT_PRODUCTS];
+      await upsertProducts(this.products);
+    }
+    if (!this.announcements.length) {
+      this.announcements = [...DEFAULT_ANNOUNCEMENTS];
+      await upsertAnnouncements(this.announcements);
+    }
+  }
+
+  refreshCurrentTab() {
+    const renderers = {
+      dashboard: () => this.updateDashboard(),
+      products: () => this.renderProducts(),
+      featured: () => this.renderFeatured(),
+      prices: () => this.renderPrices(),
+      stock: () => this.renderStock(),
+      orders: () => this.renderOrders(),
+      promotions: () => this.renderPromotions(),
+      payments: () => this.renderPayments(),
+      announcements: () => this.renderAnnouncements()
+    };
+    renderers[this.currentTab]?.();
+  }
+
+  async reloadOrders() {
+    try {
+      this.orders = await fetchAllOrdersForAdmin();
+    } catch (error) {
+      console.warn('Pedidos:', error.message);
+    }
   }
 
   bindEvents() {
@@ -81,6 +139,7 @@ class AdminManager {
 
     byId('addProductBtn')?.addEventListener('click', () => this.openProductModal());
     byId('productForm')?.addEventListener('submit', event => this.saveProduct(event));
+    byId('featuredForm')?.addEventListener('submit', event => this.saveFeatured(event));
     byId('cancelProductBtn')?.addEventListener('click', () => this.closeModal('productModal'));
 
     document.querySelectorAll('.category-btn').forEach(button => {
@@ -129,27 +188,6 @@ class AdminManager {
     });
   }
 
-  loadDefaultData() {
-    if (!this.products.length) {
-      this.products = [
-        { id: '1', name: 'Blusa Oversized Preta', category: 'blusa', description: 'Blusa oversized com modelagem confortavel', image: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?w=600', price: 129.9, stock: 15, createdAt: new Date().toISOString() },
-        { id: '2', name: 'Blusa Oversized Branca', category: 'blusa', description: 'Blusa oversized em branco off-white', image: 'https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=600', price: 129.9, stock: 12, createdAt: new Date().toISOString() },
-        { id: '3', name: 'Jaqueta de Frio', category: 'blusa-frio', description: 'Jaqueta quentinha para dias frios', image: 'https://images.unsplash.com/photo-1548126032-079a0fb0099d?w=600', price: 249.9, stock: 8, createdAt: new Date().toISOString() },
-        { id: '4', name: 'Bone Snapback', category: 'bone', description: 'Bone em estilo snapback com ajuste livre', image: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600', price: 79.9, stock: 20, createdAt: new Date().toISOString() }
-      ];
-      this.save('products', this.products);
-    }
-
-    if (!this.announcements.length) {
-      this.announcements = [
-        { id: '1', text: 'Drop 06 liberado', position: '1', active: true },
-        { id: '2', text: 'Frete gratis acima de R$ 349', position: '2', active: true },
-        { id: '3', text: 'Troca facil em ate 7 dias', position: '3', active: true }
-      ];
-      this.save('announcements', this.announcements);
-    }
-  }
-
   switchTab(tabName) {
     document.querySelectorAll('.nav-item').forEach(button => button.classList.remove('active'));
     document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
@@ -159,6 +197,7 @@ class AdminManager {
     const titles = {
       dashboard: ['Dashboard', 'Visao geral do seu negocio'],
       products: ['Gerenciar Produtos', 'Adicione, edite ou remova produtos do catalogo'],
+      featured: ['Destaques na home', 'Textos e produtos da secao Destaques no site'],
       prices: ['Gerenciar Precos', 'Atualize os precos dos produtos'],
       stock: ['Controle de Estoque', 'Monitore e atualize o estoque'],
       orders: ['Pedidos', 'Visualize todas as compras realizadas'],
@@ -173,30 +212,34 @@ class AdminManager {
     this.currentTab = tabName;
 
     const renderers = {
-      dashboard: () => { this.reloadOrdersFromStorage(); this.updateDashboard(); },
+      dashboard: async () => {
+        await this.reloadOrders();
+        this.updateDashboard();
+      },
       products: () => this.renderProducts(),
+      featured: () => this.renderFeatured(),
       prices: () => this.renderPrices(),
       stock: () => this.renderStock(),
-      orders: () => { this.reloadOrdersFromStorage(); this.renderOrders(); },
+      orders: async () => {
+        await this.reloadOrders();
+        this.renderOrders();
+      },
       promotions: () => this.renderPromotions(),
-      payments: () => { this.reloadOrdersFromStorage(); this.renderPayments(); },
+      payments: async () => {
+        await this.reloadOrders();
+        this.renderPayments();
+      },
       announcements: () => this.renderAnnouncements()
     };
-    renderers[tabName]?.();
-  }
-
-  reloadOrdersFromStorage() {
-    const storedOrders = this.load('orders');
-    if (storedOrders) this.orders = storedOrders;
-    const storedPayments = this.load('payments');
-    if (storedPayments) this.payments = storedPayments;
+    const run = renderers[tabName];
+    if (run) Promise.resolve(run()).catch(console.error);
   }
 
   updateDashboard() {
     byId('totalOrders').textContent = this.orders.length;
     byId('totalRevenue').textContent = money(this.orders.reduce((sum, order) => sum + (Number(order.total) || 0), 0));
     byId('totalStock').textContent = this.products.reduce((sum, product) => sum + (Number(product.stock) || 0), 0);
-    byId('pendingPayments').textContent = Object.values(this.payments).filter(payment => payment.status === 'pending').length;
+    byId('pendingPayments').textContent = this.orders.filter(order => (order.status || 'pending') === 'pending').length;
   }
 
   getCategoryLabel(category) {
@@ -230,6 +273,60 @@ class AdminManager {
     `).join('') : '<div class="empty-state" style="grid-column:1/-1;"><p>Nenhum produto nesta categoria</p></div>';
   }
 
+  renderFeatured() {
+    byId('featuredEyebrow').value = this.featuredSection.eyebrow || '';
+    byId('featuredTitle').value = this.featuredSection.title || '';
+    const selected = new Set((this.featuredSection.productIds || []).map(String));
+
+    const picker = byId('featuredPicker');
+    if (!this.products.length) {
+      picker.innerHTML = '<p class="form-hint">Cadastre produtos na aba Produtos para selecionar destaques.</p>';
+      return;
+    }
+
+    picker.innerHTML = this.products.map(product => `
+      <label class="featured-picker-item">
+        <input type="checkbox" name="featuredProduct" value="${product.id}" ${selected.has(String(product.id)) ? 'checked' : ''}>
+        <span class="featured-picker-item__thumb">${this.getProductImage(product)}</span>
+        <span class="featured-picker-item__info">
+          <strong>${product.name}</strong>
+          <small>${this.getCategoryLabel(product.category)} · ${money(product.price)}</small>
+        </span>
+      </label>
+    `).join('');
+
+    picker.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+      input.addEventListener('change', () => this.enforceFeaturedLimit());
+    });
+  }
+
+  enforceFeaturedLimit() {
+    const checked = [...byId('featuredPicker').querySelectorAll('input[type="checkbox"]:checked')];
+    if (checked.length <= 4) return;
+    checked[checked.length - 1].checked = false;
+    this.notify('Maximo de 4 produtos em destaque.');
+  }
+
+  async saveFeatured(event) {
+    event.preventDefault();
+    const productIds = [...byId('featuredPicker').querySelectorAll('input[type="checkbox"]:checked')]
+      .map((input) => input.value);
+
+    this.featuredSection = {
+      eyebrow: byId('featuredEyebrow').value.trim(),
+      title: byId('featuredTitle').value.trim(),
+      productIds,
+    };
+
+    try {
+      this.featuredSection = await saveFeaturedSection(this.featuredSection);
+      this.notify('Destaques salvos e publicados na home.');
+    } catch (error) {
+      console.error(error);
+      this.notify('Erro ao salvar destaques. Execute supabase-site-content.sql no Supabase.');
+    }
+  }
+
   openProductModal(productId = null) {
     byId('productForm').reset();
     byId('productId').value = '';
@@ -248,7 +345,7 @@ class AdminManager {
     this.openModal('productModal');
   }
 
-  saveProduct(event) {
+  async saveProduct(event) {
     event.preventDefault();
     const id = byId('productId').value || Date.now().toString();
     const existing = this.products.find(item => item.id === id);
@@ -265,37 +362,39 @@ class AdminManager {
 
     if (existing) this.products = this.products.map(item => item.id === id ? product : item);
     else this.products.push(product);
-    this.afterProductsChange();
-    this.closeModal('productModal');
-    this.renderProducts();
-    this.notify('Produto salvo com sucesso.');
+    try {
+      await this.afterProductsChange();
+      this.closeModal('productModal');
+      this.renderProducts();
+      this.notify('Produto salvo com sucesso.');
+    } catch {
+      this.notify('Erro ao salvar produto no Supabase.');
+    }
   }
 
-  deleteProduct(productId) {
+  async deleteProduct(productId) {
     if (!confirm('Tem certeza que deseja deletar este produto?')) return;
-    this.products = this.products.filter(product => product.id !== productId);
-    this.afterProductsChange();
-    this.renderProducts();
-    this.notify('Produto deletado com sucesso.');
+    try {
+      await deleteProductById(productId);
+      this.products = this.products.filter(product => product.id !== productId);
+      this.updateDashboard();
+      this.renderProducts();
+      this.notify('Produto deletado com sucesso.');
+    } catch (error) {
+      console.error(error);
+      this.notify('Erro ao deletar produto no Supabase.');
+    }
   }
 
-  afterProductsChange() {
-    this.save('products', this.products);
-    this.syncProductsToMainSite();
+  async afterProductsChange() {
     this.updateDashboard();
-  }
-
-  syncProductsToMainSite() {
-    // Sync all products: first 4 map to legacy IDs, rest use their own IDs
-    const defaultIds = ['heavy-hoodie', 'archive-tee', 'canvas-cap', 'zip-hoodie'];
-    const products = {};
-    this.products.forEach((product, index) => {
-      const siteId = index < defaultIds.length ? defaultIds[index] : product.id;
-      products[siteId] = { ...product, id: siteId };
-    });
-    localStorage.setItem('mainSiteProducts', JSON.stringify(products));
-    localStorage.setItem('mainSiteProductsList', JSON.stringify(this.products));
-    window.dispatchEvent(new Event('admin-products-updated'));
+    try {
+      await upsertProducts(this.products);
+    } catch (error) {
+      console.error('Sync Supabase:', error);
+      this.notify('Erro ao salvar produtos no Supabase.');
+      throw error;
+    }
   }
 
   renderPrices() {
@@ -316,12 +415,12 @@ class AdminManager {
     `).join('');
   }
 
-  updatePrice(productId, value) {
+  async updatePrice(productId, value) {
     const product = this.products.find(item => item.id === productId);
     const price = Number(value);
     if (!product || Number.isNaN(price) || price < 0) return alert('Preco invalido');
     product.price = price;
-    this.afterProductsChange();
+    await this.afterProductsChange();
     this.renderPrices();
     this.notify('Preco atualizado com sucesso.');
   }
@@ -346,12 +445,12 @@ class AdminManager {
     this.openModal('stockModal');
   }
 
-  updateStock(event) {
+  async updateStock(event) {
     event.preventDefault();
     const product = this.products.find(item => item.id === byId('stockProductId').value);
     if (!product) return;
     product.stock = Number(byId('newStockQuantity').value);
-    this.afterProductsChange();
+    await this.afterProductsChange();
     this.closeModal('stockModal');
     this.renderStock();
     this.notify('Estoque atualizado com sucesso.');
@@ -450,7 +549,7 @@ class AdminManager {
     this.openModal('promotionModal');
   }
 
-  savePromotion(event) {
+  async savePromotion(event) {
     event.preventDefault();
     const id = byId('promotionId').value || Date.now().toString();
     const promo = {
@@ -462,21 +561,31 @@ class AdminManager {
       endDate: byId('promotionEndDate').value,
       active: byId('promotionActive').checked
     };
-    this.promotions = this.promotions.some(item => item.id === id)
-      ? this.promotions.map(item => item.id === id ? promo : item)
-      : [...this.promotions, promo];
-    this.save('promotions', this.promotions);
-    this.closeModal('promotionModal');
-    this.renderPromotions();
-    this.notify('Promocao salva com sucesso.');
+    try {
+      await upsertPromotion(promo);
+      this.promotions = this.promotions.some(item => item.id === id)
+        ? this.promotions.map(item => item.id === id ? promo : item)
+        : [...this.promotions, promo];
+      this.closeModal('promotionModal');
+      this.renderPromotions();
+      this.notify('Promocao salva com sucesso.');
+    } catch (error) {
+      console.error(error);
+      this.notify('Erro ao salvar promocao no Supabase.');
+    }
   }
 
-  deletePromotion(id) {
+  async deletePromotion(id) {
     if (!confirm('Tem certeza que deseja deletar esta promocao?')) return;
-    this.promotions = this.promotions.filter(item => item.id !== id);
-    this.save('promotions', this.promotions);
-    this.renderPromotions();
-    this.notify('Promocao deletada com sucesso.');
+    try {
+      await deletePromotionById(id);
+      this.promotions = this.promotions.filter(item => item.id !== id);
+      this.renderPromotions();
+      this.notify('Promocao deletada com sucesso.');
+    } catch (error) {
+      console.error(error);
+      this.notify('Erro ao deletar promocao.');
+    }
   }
 
   renderPayments() {
@@ -497,7 +606,8 @@ class AdminManager {
   }
 
   getOrderStatus(orderId) {
-    return this.payments[orderId]?.status || 'pending';
+    const order = this.orders.find(item => item.id === orderId);
+    return order?.status || 'pending';
   }
 
   getPaymentStatusLabel(status) {
@@ -512,26 +622,34 @@ class AdminManager {
   }
 
   openPaymentModal(orderId) {
+    const order = this.orders.find(item => item.id === orderId);
     byId('paymentOrderId').value = orderId;
-    byId('paymentStatus').value = this.getOrderStatus(orderId);
-    byId('paymentNotes').value = this.payments[orderId]?.notes || '';
+    byId('paymentStatus').value = order?.status || 'pending';
+    byId('paymentNotes').value = order?.notes || '';
     this.openModal('paymentModal');
   }
 
-  savePayment(event) {
+  async savePayment(event) {
     event.preventDefault();
     const orderId = byId('paymentOrderId').value;
-    this.payments[orderId] = {
-      status: byId('paymentStatus').value,
-      notes: byId('paymentNotes').value,
-      updatedAt: new Date().toISOString()
-    };
-    this.save('payments', this.payments);
-    this.closeModal('paymentModal');
-    this.renderPayments();
-    this.renderOrders();
-    this.updateDashboard();
-    this.notify('Status de pagamento atualizado.');
+    const status = byId('paymentStatus').value;
+    const notes = byId('paymentNotes').value;
+    try {
+      await updateOrderStatus(orderId, status, notes);
+      const order = this.orders.find(item => item.id === orderId);
+      if (order) {
+        order.status = status;
+        order.notes = notes;
+      }
+      this.closeModal('paymentModal');
+      this.renderPayments();
+      this.renderOrders();
+      this.updateDashboard();
+      this.notify('Status de pagamento atualizado.');
+    } catch (error) {
+      console.error(error);
+      this.notify('Erro ao atualizar status no Supabase.');
+    }
   }
 
   renderAnnouncements() {
@@ -563,7 +681,7 @@ class AdminManager {
     this.openModal('announcementModal');
   }
 
-  saveAnnouncement(event) {
+  async saveAnnouncement(event) {
     event.preventDefault();
     const id = byId('announcementId').value || Date.now().toString();
     const announcement = {
@@ -575,18 +693,28 @@ class AdminManager {
     this.announcements = this.announcements.some(item => item.id === id)
       ? this.announcements.map(item => item.id === id ? announcement : item)
       : [...this.announcements, announcement];
-    this.save('announcements', this.announcements);
-    this.closeModal('announcementModal');
-    this.renderAnnouncements();
-    this.notify('Anuncio salvo com sucesso.');
+    try {
+      await upsertAnnouncements(this.announcements);
+      this.closeModal('announcementModal');
+      this.renderAnnouncements();
+      this.notify('Anuncio salvo com sucesso.');
+    } catch (error) {
+      console.error(error);
+      this.notify('Erro ao salvar anuncio no Supabase.');
+    }
   }
 
-  deleteAnnouncement(id) {
+  async deleteAnnouncement(id) {
     if (!confirm('Tem certeza que deseja deletar este anuncio?')) return;
-    this.announcements = this.announcements.filter(item => item.id !== id);
-    this.save('announcements', this.announcements);
-    this.renderAnnouncements();
-    this.notify('Anuncio deletado com sucesso.');
+    try {
+      await deleteAnnouncementById(id);
+      this.announcements = this.announcements.filter(item => item.id !== id);
+      this.renderAnnouncements();
+      this.notify('Anuncio deletado com sucesso.');
+    } catch (error) {
+      console.error(error);
+      this.notify('Erro ao deletar anuncio.');
+    }
   }
 
   getInlineImage(image, label) {
@@ -624,12 +752,15 @@ class AdminManager {
     window.location.href = 'admin-login.html';
   }
 
-  addOrder(orderData) {
-    const order = { id: Date.now().toString(), ...orderData };
-    this.orders.push(order);
-    this.save('orders', this.orders);
-    this.payments[order.id] = { status: 'pending', notes: '' };
-    this.save('payments', this.payments);
+  async addOrder(orderData) {
+    const order = {
+      id: Date.now().toString(),
+      status: 'pending',
+      notes: '',
+      ...orderData
+    };
+    await createOrder(order);
+    this.orders.unshift(order);
     this.updateDashboard();
     return order;
   }
@@ -640,6 +771,7 @@ async function initializeAdminPage() {
     const session = await requireSupabaseAdmin();
     if (!session) return;
     adminManager = new AdminManager();
+    await adminManager.hydrateFromDatabase();
     window.adminManager = adminManager;
   } catch (error) {
     console.error('Erro ao validar login Supabase:', error);
@@ -647,9 +779,9 @@ async function initializeAdminPage() {
   }
 }
 
-window.addSampleOrder = function addSampleOrder() {
+window.addSampleOrder = async function addSampleOrder() {
   if (!adminManager) return;
-  adminManager.addOrder({
+  await adminManager.addOrder({
     customerName: 'Joao Silva',
     email: 'joao@example.com',
     phone: '(11) 98765-4321',
@@ -665,7 +797,7 @@ window.addSampleOrder = function addSampleOrder() {
   });
 };
 
-window.submitOrder = function submitOrder(orderData) {
+window.submitOrder = async function submitOrder(orderData) {
   if (!adminManager) return null;
   return adminManager.addOrder(orderData);
 };

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todos os drops | SwagVerse's</title>
+    <meta
+      name="description"
+      content="Catalogo completo SwagVerse's: blusas, blusas de frio, camisetas, regatas, bones e acessorios streetwear."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body class="page-catalog">
+    <div class="announcement">
+      <span id="announcement1">Drop 06 liberado</span>
+      <span id="announcement2">Frete gratis acima de R$ 349</span>
+      <span id="announcement3">Troca facil em ate 7 dias</span>
+    </div>
+
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Voltar para a loja">
+        <span>SV</span>
+        SwagVerse's
+      </a>
+
+      <nav class="desktop-nav" aria-label="Menu principal">
+        <a href="/#drops">Drops</a>
+        <a href="/catalogo.html" aria-current="page">Catalogo</a>
+        <a href="/#shop">Destaques</a>
+        <a href="/#editorial">Editorial</a>
+        <a href="/#order-status">Pedidos</a>
+        <a href="/#contact">Contato</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-button" id="openCart" type="button" aria-label="Abrir sacola">
+          <span class="bag-icon" aria-hidden="true"></span>
+          <span id="cartCount">0</span>
+        </button>
+        <a href="/admin-login.html" class="icon-button admin-button" title="Painel Administrativo">
+          <span aria-hidden="true">⚙️</span>
+        </a>
+        <button class="menu-button" id="navToggle" type="button" aria-label="Abrir menu">
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </header>
+
+    <nav class="mobile-nav" id="mobileNav" aria-label="Menu mobile">
+      <a href="/#drops">Drops</a>
+      <a href="/catalogo.html" aria-current="page">Catalogo</a>
+      <a href="/#shop">Destaques</a>
+      <a href="/#editorial">Editorial</a>
+      <a href="/#order-status">Pedidos</a>
+      <a href="/#contact">Contato</a>
+    </nav>
+
+    <main class="catalog-page-main" id="top">
+      <div class="catalog-page-bar">
+        <a class="catalog-back-link" href="/">← Voltar para a loja</a>
+      </div>
+
+      <section class="catalog-section catalog-section--page" id="catalog" aria-label="Catalogo completo">
+        <header class="catalog-header">
+          <div>
+            <p class="eyebrow">Todos os drops</p>
+            <h1>Catalogo SwagVerse's</h1>
+            <p class="catalog-header__text">
+              Blusas, blusas de frio, camisetas, regatas, bones e mais. Filtre por tipo e encontre sua peca.
+            </p>
+          </div>
+        </header>
+
+        <div class="catalog-layout">
+          <aside class="catalog-sidebar" aria-label="Filtros de roupa">
+            <div class="catalog-sidebar__inner">
+              <h2 class="catalog-sidebar__title">Filtrar</h2>
+              <nav class="catalog-filters" id="catalogFilters" role="tablist"></nav>
+            </div>
+          </aside>
+
+          <div class="catalog-main">
+            <div class="catalog-toolbar">
+              <p class="catalog-count" id="catalogCount" aria-live="polite">0 pecas</p>
+              <label class="catalog-sort">
+                <span class="visually-hidden">Ordenar por</span>
+                <select id="catalogSort" aria-label="Ordenar produtos">
+                  <option value="featured">Destaques</option>
+                  <option value="name">Nome A–Z</option>
+                  <option value="price-asc">Menor preco</option>
+                  <option value="price-desc">Maior preco</option>
+                </select>
+              </label>
+            </div>
+            <div class="catalog-grid" id="catalogGrid"></div>
+            <p class="catalog-empty" id="catalogEmpty" hidden>Nenhuma peca neste filtro. Tente outra categoria.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="cart-drawer" id="cartDrawer" aria-label="Sacola de compras" aria-hidden="true">
+      <div class="drawer-header">
+        <div>
+          <p class="eyebrow">Sacola</p>
+          <h2>Seu pedido</h2>
+        </div>
+        <button class="drawer-close" id="closeCart" type="button" aria-label="Fechar sacola">Fechar</button>
+      </div>
+
+      <div class="cart-items" id="cartItems"></div>
+
+      <form class="checkout-form" id="checkoutForm">
+        <label for="checkoutName">Nome completo</label>
+        <input id="checkoutName" type="text" autocomplete="name" required />
+
+        <label for="checkoutPhone">Telefone</label>
+        <input id="checkoutPhone" type="tel" inputmode="numeric" pattern="\(\d{2}\)\s?\d{4,5}-\d{4}" maxlength="15" placeholder="(00) 00000-0000" autocomplete="tel" required />
+
+        <label for="checkoutEmail">E-mail</label>
+        <input id="checkoutEmail" type="email" autocomplete="email" required />
+
+        <label for="checkoutCpf">CPF</label>
+        <input id="checkoutCpf" type="text" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" required />
+
+        <label for="paymentMethod">Pagamento</label>
+        <select id="paymentMethod" required>
+          <option value="Pix">Pix</option>
+          <option value="Cartao de credito">Cartao de credito</option>
+          <option value="Boleto">Boleto</option>
+          <option value="Dinheiro na retirada">Dinheiro na retirada</option>
+        </select>
+      </form>
+
+      <div class="shipping-block">
+        <label for="cepInput">Calcular frete</label>
+        <div class="cep-row">
+          <input id="cepInput" type="text" inputmode="numeric" maxlength="9" placeholder="00000-000" />
+          <button class="button button-light" id="checkShipping" type="button">OK</button>
+        </div>
+        <p id="shippingResult">Digite o CEP para estimar a entrega.</p>
+      </div>
+
+      <div class="cart-summary">
+        <div>
+          <span>Subtotal</span>
+          <strong id="subtotalValue">R$ 0,00</strong>
+        </div>
+        <div>
+          <span>Frete</span>
+          <strong id="shippingValue">R$ 0,00</strong>
+        </div>
+        <div class="total-row">
+          <span>Total</span>
+          <strong id="totalValue">R$ 0,00</strong>
+        </div>
+        <button class="button button-dark" id="checkoutButton" type="button">Finalizar compra</button>
+      </div>
+    </aside>
+
+    <div class="backdrop" id="backdrop"></div>
+
+    <footer class="site-footer">
+      <strong>SwagVerse's</strong>
+      <span>Catalogo completo · Streetwear store, 2026.</span>
+      <a href="/">Voltar para a home</a>
+    </footer>
+  </body>
+</html>

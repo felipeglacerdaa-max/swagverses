@@ -30,6 +30,10 @@
             <span class="nav-icon">👕</span>
             Produtos
           </button>
+          <button class="nav-item" data-tab="featured">
+            <span class="nav-icon">⭐</span>
+            Destaques
+          </button>
           <button class="nav-item" data-tab="prices">
             <span class="nav-icon">💰</span>
             Preços
@@ -129,6 +133,42 @@
             <div class="products-grid" id="productsGrid">
               <!-- Produtos serão renderizados aqui -->
             </div>
+          </section>
+
+          <!-- Destaques (home) -->
+          <section id="featured" class="tab-content">
+            <div class="tab-header">
+              <div>
+                <h2>Destaques na home</h2>
+                <p class="tab-header-sub">Secao &quot;Destaques / Selecao rapida do drop&quot; no site principal</p>
+              </div>
+            </div>
+
+            <form id="featuredForm" class="featured-admin-form">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="featuredEyebrow">Subtitulo (linha pequena)</label>
+                  <input type="text" id="featuredEyebrow" required placeholder="Ex: Destaques" maxlength="80">
+                </div>
+
+                <div class="form-group">
+                  <label for="featuredTitle">Titulo principal</label>
+                  <input type="text" id="featuredTitle" required placeholder="Ex: Selecao rapida do drop." maxlength="120">
+                </div>
+
+                <div class="form-group featured-picker-group">
+                  <label>Produtos em destaque <span class="featured-limit">(max. 4)</span></label>
+                  <p class="form-hint">
+                    Escolha quais pecas aparecem na grade de destaques. Se nenhuma estiver marcada, o site usa os 4 primeiros produtos do catalogo.
+                  </p>
+                  <div class="featured-picker" id="featuredPicker"></div>
+                </div>
+
+                <div class="form-actions featured-form-actions">
+                  <button type="submit" class="btn btn-primary">Salvar destaques</button>
+                </div>
+              </div>
+            </form>
           </section>
 
           <!-- Product Form Modal -->

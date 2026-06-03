@@ -3,9 +3,6 @@
 // Importar estilos
 import './style.css';
 
-// Importar store/estado
-import './store.js';
-
 // Importar script principal da aplicação
 import '../script.js';
 
