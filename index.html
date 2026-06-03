@@ -171,7 +171,7 @@
           </p>
           <div class="contact-list">
             <span>WhatsApp: <span id="contactPhone">+55 11 9XXXX-XXXX</span></span>
-            <span>E-mail: <span id="contactEmail">contato@swagverses.com</span></span>
+            <span>E-mail: <span id="contactEmail">swagverses@hotmail.com</span></span>
             <span>Instagram: <span id="contactInstagram">@swagverses</span></span>
           </div>
         </div>
@@ -207,7 +207,7 @@
         <input id="checkoutName" type="text" autocomplete="name" required />
 
         <label for="checkoutPhone">Telefone</label>
-        <input id="checkoutPhone" type="tel" autocomplete="tel" required />
+        <input id="checkoutPhone" type="tel" inputmode="numeric" pattern="\(\d{2}\)\s?\d{4,5}-\d{4}" maxlength="15" placeholder="(00) 00000-0000" autocomplete="tel" required />
 
         <label for="checkoutEmail">E-mail</label>
         <input id="checkoutEmail" type="email" autocomplete="email" required />

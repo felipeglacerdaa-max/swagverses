@@ -53,6 +53,16 @@ const formatCpf = (value = '') => {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 };
 
+const formatPhone = (value = '') => {
+  const digits = onlyDigits(value).slice(0, 11);
+  if (!digits) return '';
+  const ddd = digits.slice(0, 2);
+  const rest = digits.slice(2);
+  if (rest.length <= 4) return `(${ddd}) ${rest}`;
+  if (rest.length <= 8) return `(${ddd}) ${rest.slice(0,4)}-${rest.slice(4)}`;
+  return `(${ddd}) ${rest.slice(0,5)}-${rest.slice(5)}`;
+};
+
 const isImageUrl = (value = '') => /^(https?:\/\/|data:image\/)/i.test(String(value).trim());
 
 const readStorage = (key, fallback) => {
@@ -271,7 +281,8 @@ const buildOrder = () => {
     id: Date.now().toString(),
     customerName: checkoutName.value.trim(),
     email: checkoutEmail.value.trim(),
-    phone: checkoutPhone.value.trim(),
+    phone: onlyDigits(checkoutPhone.value),
+    phoneFormatted: formatPhone(checkoutPhone.value),
     cpf: cpfDigits,
     cpfFormatted: formatCpf(cpfDigits),
     cep: cepInput.value.trim(),
@@ -368,6 +379,17 @@ checkShipping.addEventListener('click', showShippingStatus);
   input?.addEventListener('input', () => {
     input.value = formatCpf(input.value);
   });
+});
+
+// Format phone in cart: accept only digits but display as (DD) NNNNN-NNNN
+checkoutPhone?.addEventListener('input', () => {
+  checkoutPhone.value = formatPhone(checkoutPhone.value);
+  // move cursor to end for smoother typing experience
+  try {
+    checkoutPhone.setSelectionRange(checkoutPhone.value.length, checkoutPhone.value.length);
+  } catch (e) {
+    // ignore if not supported
+  }
 });
 
 orderStatusForm?.addEventListener('submit', (event) => {
