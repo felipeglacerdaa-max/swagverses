@@ -1,4 +1,5 @@
 import { DEFAULT_FEATURED_SECTION, normalizeProductForSite, toShopCategory } from './catalog.js';
+import { buildProductImagePath } from './product-image-utils.js';
 
 export const SUPABASE_URL = 'https://nfxwzpkdjzucmpbgbmsp.supabase.co';
 export const SUPABASE_ANON_KEY =
@@ -101,6 +102,28 @@ export async function deleteProductById(productId) {
   const supabase = await getSupabaseClient();
   const { error } = await supabase.from('products').delete().eq('id', String(productId));
   if (error) throw error;
+}
+
+export async function uploadProductImage(file, productId = Date.now()) {
+  if (!file) throw new Error('Nenhum arquivo selecionado.');
+
+  const supabase = await getSupabaseClient();
+  const storagePath = buildProductImagePath(file.name, productId);
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from('products')
+    .upload(storagePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: file.type || 'image/jpeg',
+    });
+
+  if (uploadError) throw uploadError;
+
+  const { data: publicData } = supabase.storage
+    .from('products')
+    .getPublicUrl(uploadData?.path || storagePath);
+
+  return publicData?.publicUrl || '';
 }
 
 // ——— Pedidos ———
@@ -241,6 +264,12 @@ export async function updateOrderStatus(orderId, status, notes) {
     })
     .eq('id', String(orderId));
 
+  if (error) throw error;
+}
+
+export async function deleteOrderById(orderId) {
+  const supabase = await getSupabaseClient();
+  const { error } = await supabase.from('orders').delete().eq('id', String(orderId));
   if (error) throw error;
 }
 

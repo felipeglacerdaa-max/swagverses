@@ -190,9 +190,9 @@ create policy "Admin read orders"
   to authenticated
   using (true);
 
-drop policy if exists "Admin update orders" on public.orders;
-create policy "Admin update orders"
-  on public.orders for update
+drop policy if exists "Admin manage orders" on public.orders;
+create policy "Admin manage orders"
+  on public.orders for all
   to authenticated
   using (true)
   with check (true);
@@ -202,11 +202,12 @@ create policy "Anyone insert order items"
   on public.order_items for insert
   with check (true);
 
-drop policy if exists "Admin read order items" on public.order_items;
-create policy "Admin read order items"
-  on public.order_items for select
+drop policy if exists "Admin manage order items" on public.order_items;
+create policy "Admin manage order items"
+  on public.order_items for all
   to authenticated
-  using (true);
+  using (true)
+  with check (true);
 
 drop policy if exists "Admin manage announcements" on public.announcements;
 create policy "Admin manage announcements"

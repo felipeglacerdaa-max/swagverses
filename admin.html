@@ -202,8 +202,14 @@
                 </div>
 
                 <div class="form-group">
-                  <label>Imagem (URL)</label>
+                  <label>Imagem da blusa</label>
+                  <div class="image-upload-row">
+                    <input type="file" id="productImageFile" accept="image/*" style="display:none">
+                    <button type="button" class="btn btn-secondary btn-small" id="productImageUploadBtn">Anexar</button>
+                    <span id="productImageStatus" class="form-hint">Ou cole uma URL abaixo.</span>
+                  </div>
                   <input type="url" id="productImage" placeholder="https://exemplo.com/imagem.jpg">
+                  <small class="form-hint">Selecione um arquivo para enviar ao Supabase ou use uma URL.</small>
                 </div>
 
                 <div class="form-group">
@@ -305,6 +311,7 @@
                     <th>Telefone</th>
                     <th>CPF</th>
                     <th>Total</th>
+                    <th>Itens</th>
                     <th>Status</th>
                     <th>Ação</th>
                   </tr>

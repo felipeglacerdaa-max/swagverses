@@ -1,6 +1,7 @@
 import {
   createOrder,
   deleteAnnouncementById,
+  deleteOrderById,
   deleteProductById,
   deletePromotionById,
   fetchAllAnnouncementsForAdmin,
@@ -14,6 +15,7 @@ import {
   upsertAnnouncements,
   upsertProducts,
   upsertPromotion,
+  uploadProductImage,
 } from './src/supabase-client.js';
 import { DEFAULT_FEATURED_SECTION } from './src/catalog.js';
 
@@ -65,6 +67,7 @@ class AdminManager {
     this.currentTab = 'dashboard';
     this.currentCategory = 'blusa';
     this.currentPaymentFilter = 'all';
+    this.hasSeededDefaults = false;
     this.init();
   }
 
@@ -99,9 +102,10 @@ class AdminManager {
   }
 
   async seedDefaultsIfEmpty() {
-    if (!this.products.length) {
+    if (!this.hasSeededDefaults && !this.products.length) {
       this.products = [...DEFAULT_PRODUCTS];
       await upsertProducts(this.products);
+      this.hasSeededDefaults = true;
     }
     if (!this.announcements.length) {
       this.announcements = [...DEFAULT_ANNOUNCEMENTS];
@@ -139,6 +143,8 @@ class AdminManager {
 
     byId('addProductBtn')?.addEventListener('click', () => this.openProductModal());
     byId('productForm')?.addEventListener('submit', event => this.saveProduct(event));
+    byId('productImageUploadBtn')?.addEventListener('click', () => byId('productImageFile')?.click());
+    byId('productImageFile')?.addEventListener('change', (event) => this.handleProductImageSelection(event));
     byId('featuredForm')?.addEventListener('submit', event => this.saveFeatured(event));
     byId('cancelProductBtn')?.addEventListener('click', () => this.closeModal('productModal'));
 
@@ -330,6 +336,9 @@ class AdminManager {
   openProductModal(productId = null) {
     byId('productForm').reset();
     byId('productId').value = '';
+    byId('productImage').value = '';
+    byId('productImageFile').value = '';
+    byId('productImageStatus').textContent = 'Ou cole uma URL abaixo.';
     byId('modalTitle').textContent = productId ? 'Editar Produto' : 'Adicionar Produto';
 
     const product = this.products.find(item => item.id === productId);
@@ -343,6 +352,34 @@ class AdminManager {
       byId('productStock').value = product.stock;
     }
     this.openModal('productModal');
+  }
+
+  async handleProductImageSelection(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const uploadButton = byId('productImageUploadBtn');
+    const status = byId('productImageStatus');
+    const productId = byId('productId').value || Date.now().toString();
+
+    try {
+      uploadButton.disabled = true;
+      uploadButton.textContent = 'Enviando...';
+      status.textContent = 'Enviando imagem para o Supabase...';
+
+      const imageUrl = await uploadProductImage(file, productId);
+      byId('productImage').value = imageUrl;
+      status.textContent = imageUrl ? 'Imagem enviada com sucesso.' : 'Imagem salva no Supabase.';
+      this.notify('Imagem anexada com sucesso.');
+    } catch (error) {
+      console.error('Erro ao anexar imagem:', error);
+      status.textContent = 'Não foi possível anexar a imagem. Tente novamente ou use uma URL.';
+      this.notify('Erro ao anexar imagem no Supabase.');
+    } finally {
+      uploadButton.disabled = false;
+      uploadButton.textContent = 'Anexar';
+      event.target.value = '';
+    }
   }
 
   async saveProduct(event) {
@@ -456,6 +493,11 @@ class AdminManager {
     this.notify('Estoque atualizado com sucesso.');
   }
 
+  getOrderItemsSummary(order) {
+    const items = (order.items || []).map(item => `${item.name} × ${item.quantity}`).join(' • ');
+    return items || '—';
+  }
+
   renderOrders(orders = this.orders) {
     byId('ordersTableBody').innerHTML = orders.length ? orders.map(order => `
       <tr>
@@ -465,10 +507,14 @@ class AdminManager {
         <td>${order.phone || 'N/A'}</td>
         <td>${order.cpfFormatted || order.cpf || 'N/A'}</td>
         <td>${money(order.total)}</td>
+        <td title="${this.getOrderItemsSummary(order)}">${this.getOrderItemsSummary(order)}</td>
         <td><span class="status-badge status-${this.getOrderStatus(order.id)}">${this.getPaymentStatusLabel(this.getOrderStatus(order.id))}</span></td>
-        <td><button class="btn btn-primary btn-small" onclick="adminManager.openOrderModal('${order.id}')">Ver</button></td>
+        <td>
+          <button class="btn btn-primary btn-small" onclick="adminManager.openOrderModal('${order.id}')">Ver</button>
+          <button class="btn btn-danger btn-small" onclick="adminManager.deleteOrder('${order.id}')" title="Excluir pedido" aria-label="Excluir pedido">✕</button>
+        </td>
       </tr>
-    `).join('') : '<tr><td colspan="8" style="text-align:center;padding:40px;">Nenhum pedido realizado ainda</td></tr>';
+    `).join('') : '<tr><td colspan="9" style="text-align:center;padding:40px;">Nenhum pedido realizado ainda</td></tr>';
   }
 
   openOrderModal(orderId) {
@@ -493,6 +539,7 @@ class AdminManager {
       <div class="order-items">${items || 'Nenhum item informado'}</div>
       <div class="order-detail-row" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border-color);">
         <button class="btn btn-primary" onclick="adminManager.openPaymentModal('${order.id}')">Atualizar Status</button>
+        <button class="btn btn-danger" onclick="adminManager.deleteOrder('${order.id}')" style="margin-left:10px;">✕ Excluir Pedido</button>
       </div>
     `;
     this.openModal('orderModal');
@@ -500,6 +547,22 @@ class AdminManager {
 
   detailRow(label, value) {
     return `<div class="order-detail-row"><div><span class="order-detail-label">${label}</span></div><div><span class="order-detail-value">${value}</span></div></div>`;
+  }
+
+  async deleteOrder(orderId) {
+    if (!confirm('Tem certeza que deseja excluir este pedido?')) return;
+    try {
+      await deleteOrderById(orderId);
+      this.orders = this.orders.filter(item => item.id !== orderId);
+      this.updateDashboard();
+      this.renderOrders();
+      this.renderPayments();
+      this.closeModal('orderModal');
+      this.notify('Pedido excluído com sucesso.');
+    } catch (error) {
+      console.error(error);
+      this.notify('Erro ao excluir pedido no Supabase.');
+    }
   }
 
   filterOrders(searchTerm) {
@@ -510,7 +573,8 @@ class AdminManager {
       (order.email || '').toLowerCase().includes(term) ||
       (order.phone || '').includes(searchTerm) ||
       (order.cpf || '').includes(searchTerm.replace(/\D/g, '')) ||
-      (order.cpfFormatted || '').includes(searchTerm)
+      (order.cpfFormatted || '').includes(searchTerm) ||
+      this.getOrderItemsSummary(order).toLowerCase().includes(term)
     ));
   }
 
@@ -600,7 +664,10 @@ class AdminManager {
         <td>${money(order.total)}</td>
         <td>${order.paymentMethod || 'N/A'}</td>
         <td><span class="status-badge status-${order.status}">${this.getPaymentStatusLabel(order.status)}</span></td>
-        <td><button class="btn btn-primary btn-small" onclick="adminManager.openPaymentModal('${order.id}')">Editar</button></td>
+        <td>
+          <button class="btn btn-primary btn-small" onclick="adminManager.openPaymentModal('${order.id}')">Editar</button>
+          <button class="btn btn-danger btn-small" onclick="adminManager.deleteOrder('${order.id}')" title="Excluir pedido" aria-label="Excluir pedido">✕</button>
+        </td>
       </tr>
     `).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;">Nenhum pagamento encontrado</td></tr>';
   }
