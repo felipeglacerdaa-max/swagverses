@@ -325,6 +325,20 @@ $$;
 
 grant execute on function public.place_order(jsonb, jsonb) to anon, authenticated;
 
+create or replace function public.delete_order(p_order_id text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from public.order_items where order_id = p_order_id;
+  delete from public.orders where id = p_order_id;
+end;
+$$;
+
+grant execute on function public.delete_order(text) to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Dados iniciais (opcional — espelha o admin padrão)
 -- ---------------------------------------------------------------------------

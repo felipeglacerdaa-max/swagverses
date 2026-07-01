@@ -14,3 +14,12 @@ export function buildProductImagePath(fileName = 'image', productId = Date.now()
   const safeProductId = String(productId).replace(/[^a-zA-Z0-9-_]+/g, '-').replace(/-+/g, '-') || 'product';
   return `products/${safeProductId}/${Date.now()}-${safeName}`;
 }
+
+export function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result || '');
+    reader.onerror = () => reject(reader.error || new Error('Erro ao ler o arquivo.'));
+    reader.readAsDataURL(file);
+  });
+}

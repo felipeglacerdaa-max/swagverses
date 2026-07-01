@@ -510,8 +510,8 @@ class AdminManager {
         <td title="${this.getOrderItemsSummary(order)}">${this.getOrderItemsSummary(order)}</td>
         <td><span class="status-badge status-${this.getOrderStatus(order.id)}">${this.getPaymentStatusLabel(this.getOrderStatus(order.id))}</span></td>
         <td>
-          <button class="btn btn-primary btn-small" onclick="adminManager.openOrderModal('${order.id}')">Ver</button>
-          <button class="btn btn-danger btn-small" onclick="adminManager.deleteOrder('${order.id}')" title="Excluir pedido" aria-label="Excluir pedido">✕</button>
+          <button class="btn btn-primary btn-small" onclick="window.adminManager?.openOrderModal('${order.id}')">Ver</button>
+          <button class="btn btn-danger btn-small" onclick="window.adminManager?.deleteOrder('${order.id}')" title="Excluir pedido" aria-label="Excluir pedido">✕</button>
         </td>
       </tr>
     `).join('') : '<tr><td colspan="9" style="text-align:center;padding:40px;">Nenhum pedido realizado ainda</td></tr>';
@@ -538,8 +538,8 @@ class AdminManager {
       <h4>Itens do Pedido:</h4>
       <div class="order-items">${items || 'Nenhum item informado'}</div>
       <div class="order-detail-row" style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border-color);">
-        <button class="btn btn-primary" onclick="adminManager.openPaymentModal('${order.id}')">Atualizar Status</button>
-        <button class="btn btn-danger" onclick="adminManager.deleteOrder('${order.id}')" style="margin-left:10px;">✕ Excluir Pedido</button>
+        <button class="btn btn-primary" onclick="window.adminManager?.openPaymentModal('${order.id}')">Atualizar Status</button>
+        <button class="btn btn-danger" onclick="window.adminManager?.deleteOrder('${order.id}')" style="margin-left:10px;">✕ Excluir Pedido</button>
       </div>
     `;
     this.openModal('orderModal');
@@ -665,8 +665,8 @@ class AdminManager {
         <td>${order.paymentMethod || 'N/A'}</td>
         <td><span class="status-badge status-${order.status}">${this.getPaymentStatusLabel(order.status)}</span></td>
         <td>
-          <button class="btn btn-primary btn-small" onclick="adminManager.openPaymentModal('${order.id}')">Editar</button>
-          <button class="btn btn-danger btn-small" onclick="adminManager.deleteOrder('${order.id}')" title="Excluir pedido" aria-label="Excluir pedido">✕</button>
+          <button class="btn btn-primary btn-small" onclick="window.adminManager?.openPaymentModal('${order.id}')">Editar</button>
+          <button class="btn btn-danger btn-small" onclick="window.adminManager?.deleteOrder('${order.id}')" title="Excluir pedido" aria-label="Excluir pedido">✕</button>
         </td>
       </tr>
     `).join('') : '<tr><td colspan="7" style="text-align:center;padding:40px;">Nenhum pagamento encontrado</td></tr>';

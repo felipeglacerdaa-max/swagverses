@@ -1,5 +1,5 @@
 import { DEFAULT_FEATURED_SECTION, normalizeProductForSite, toShopCategory } from './catalog.js';
-import { buildProductImagePath } from './product-image-utils.js';
+import { buildProductImagePath, fileToDataUrl } from './product-image-utils.js';
 
 export const SUPABASE_URL = 'https://nfxwzpkdjzucmpbgbmsp.supabase.co';
 export const SUPABASE_ANON_KEY =
@@ -109,21 +109,27 @@ export async function uploadProductImage(file, productId = Date.now()) {
 
   const supabase = await getSupabaseClient();
   const storagePath = buildProductImagePath(file.name, productId);
-  const { data: uploadData, error: uploadError } = await supabase.storage
-    .from('products')
-    .upload(storagePath, file, {
-      cacheControl: '3600',
-      upsert: true,
-      contentType: file.type || 'image/jpeg',
-    });
 
-  if (uploadError) throw uploadError;
+  try {
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('products')
+      .upload(storagePath, file, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: file.type || 'image/jpeg',
+      });
 
-  const { data: publicData } = supabase.storage
-    .from('products')
-    .getPublicUrl(uploadData?.path || storagePath);
+    if (uploadError) throw uploadError;
 
-  return publicData?.publicUrl || '';
+    const { data: publicData } = supabase.storage
+      .from('products')
+      .getPublicUrl(uploadData?.path || storagePath);
+
+    return publicData?.publicUrl || '';
+  } catch (error) {
+    console.warn('Falha no upload de imagem para o Storage do Supabase, usando fallback em base64:', error);
+    return fileToDataUrl(file);
+  }
 }
 
 // ——— Pedidos ———
@@ -269,7 +275,12 @@ export async function updateOrderStatus(orderId, status, notes) {
 
 export async function deleteOrderById(orderId) {
   const supabase = await getSupabaseClient();
-  const { error } = await supabase.from('orders').delete().eq('id', String(orderId));
+  const id = String(orderId);
+
+  const { error: itemsError } = await supabase.from('order_items').delete().eq('order_id', id);
+  if (itemsError) throw itemsError;
+
+  const { error } = await supabase.from('orders').delete().eq('id', id);
   if (error) throw error;
 }
 
