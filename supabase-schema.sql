@@ -354,7 +354,7 @@ values
     '3',
     'Jaqueta de Frio',
     'blusa-frio',
-    'Jaqueta quentinha para dias frios',
+    'Jaqueta quentinha para dias frios.',
     'https://images.unsplash.com/photo-1548126032-079a0fb0099d?w=600',
     249.90,
     8,
