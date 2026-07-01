@@ -192,7 +192,22 @@ create policy "Admin read orders"
 
 drop policy if exists "Admin manage orders" on public.orders;
 create policy "Admin manage orders"
-  on public.orders for all
+  on public.orders for select
+  to authenticated
+  using (true);
+
+create policy "Admin delete orders"
+  on public.orders for delete
+  to authenticated
+  using (true);
+
+create policy "Admin insert orders"
+  on public.orders for insert
+  to authenticated
+  with check (true);
+
+create policy "Admin update orders"
+  on public.orders for update
   to authenticated
   using (true)
   with check (true);
@@ -204,7 +219,22 @@ create policy "Anyone insert order items"
 
 drop policy if exists "Admin manage order items" on public.order_items;
 create policy "Admin manage order items"
-  on public.order_items for all
+  on public.order_items for select
+  to authenticated
+  using (true);
+
+create policy "Admin delete order items"
+  on public.order_items for delete
+  to authenticated
+  using (true);
+
+create policy "Admin insert order items"
+  on public.order_items for insert
+  to authenticated
+  with check (true);
+
+create policy "Admin update order items"
+  on public.order_items for update
   to authenticated
   using (true)
   with check (true);
