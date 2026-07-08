@@ -49,6 +49,50 @@ const orderStatusForm = document.getElementById('orderStatusForm');
 const orderCpfSearch = document.getElementById('orderCpfSearch');
 const orderStatusResult = document.getElementById('orderStatusResult');
 
+const scrollToSection = (sectionId = 'top') => {
+  const targetId = sectionId === 'top' ? 'top' : sectionId;
+  const target = document.getElementById(targetId);
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  return false;
+};
+
+const handleSectionNavigation = (sectionId) => {
+  if (!sectionId) return;
+
+  if (window.location.pathname === '/' && !window.location.search) {
+    scrollToSection(sectionId);
+    return;
+  }
+
+  sessionStorage.setItem('swagverse-target-section', sectionId);
+  window.location.assign('/');
+};
+
+const applyPendingSectionNavigation = () => {
+  const pendingSection = sessionStorage.getItem('swagverse-target-section');
+  if (!pendingSection) return;
+
+  sessionStorage.removeItem('swagverse-target-section');
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      scrollToSection(pendingSection);
+    });
+  });
+};
+
+document.addEventListener('click', (event) => {
+  const link = event.target.closest('a[data-section-target]');
+  if (!link) return;
+
+  event.preventDefault();
+  handleSectionNavigation(link.dataset.sectionTarget);
+});
+
 const escapeHtml = (value = '') => String(value)
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
@@ -291,7 +335,9 @@ function attachCartButtonListeners() {
 
 document.addEventListener('DOMContentLoaded', () => {
   initCatalogControls();
-  bootstrapSite();
+  bootstrapSite().finally(() => {
+    applyPendingSectionNavigation();
+  });
 });
 
 const cart = {
