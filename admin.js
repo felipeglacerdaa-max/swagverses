@@ -22,6 +22,14 @@ import { DEFAULT_FEATURED_SECTION } from './src/catalog.js';
 let supabaseClient = null;
 let adminManager = null;
 
+function getAdminLoginRoute() {
+  return '/admin-login';
+}
+
+function getAdminDashboardRoute() {
+  return '/admin/painel';
+}
+
 function byId(id) {
   return document.getElementById(id);
 }
@@ -35,7 +43,7 @@ async function requireSupabaseAdmin() {
 
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
-    window.location.href = 'admin-login.html';
+    window.location.href = getAdminLoginRoute();
     return null;
   }
 
@@ -816,7 +824,7 @@ class AdminManager {
   async logout() {
     if (!confirm('Tem certeza que deseja sair?')) return;
     await supabaseClient?.auth.signOut();
-    window.location.href = 'admin-login.html';
+    window.location.href = getAdminLoginRoute();
   }
 
   async addOrder(orderData) {
@@ -842,7 +850,7 @@ async function initializeAdminPage() {
     window.adminManager = adminManager;
   } catch (error) {
     console.error('Erro ao validar login Supabase:', error);
-    window.location.href = 'admin-login.html';
+    window.location.href = getAdminLoginRoute();
   }
 }
 

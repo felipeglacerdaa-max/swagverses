@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
     <title>Login - Painel Administrativo | SwagVerse's</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -250,6 +251,14 @@
         return true;
       }
 
+      function getAdminLoginRoute() {
+        return '/admin-login';
+      }
+
+      function getAdminDashboardRoute() {
+        return '/admin/painel';
+      }
+
       async function init() {
         if (!await waitForSupabase()) {
           showError('Erro ao carregar Supabase.');
@@ -258,7 +267,7 @@
 
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          window.location.href = 'admin.html';
+          window.location.href = getAdminDashboardRoute();
           return;
         }
 
@@ -289,7 +298,7 @@
           else localStorage.removeItem('rememberedEmail');
 
           showSuccess('Login realizado. Redirecionando...');
-          setTimeout(() => window.location.href = 'admin.html', 800);
+          setTimeout(() => window.location.href = getAdminDashboardRoute(), 800);
         } catch (error) {
           showError(error.message);
           hideLoading();
@@ -329,7 +338,7 @@
 
         showLoading();
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + '/admin-login.html'
+          redirectTo: window.location.origin + '/admin'
         });
 
         if (error) showError(error.message);

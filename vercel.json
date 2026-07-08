@@ -3,12 +3,14 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
+    { "source": "/admin", "destination": "/admin-login.html" },
+    { "source": "/admin/", "destination": "/admin-login.html" },
     { "source": "/admin-login", "destination": "/admin-login.html" },
     { "source": "/admin-login/", "destination": "/admin-login.html" },
+    { "source": "/admin/painel", "destination": "/admin.html" },
+    { "source": "/admin/painel/", "destination": "/admin.html" },
     { "source": "/admin-index", "destination": "/admin-index.html" },
     { "source": "/admin-index/", "destination": "/admin-index.html" },
-    { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/admin/", "destination": "/admin.html" },
     { "source": "/catalogo", "destination": "/catalogo.html" },
     { "source": "/catalogo/", "destination": "/catalogo.html" }
   ]

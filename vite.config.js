@@ -2,6 +2,16 @@ import { resolve } from 'path'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  server: {
+    middlewareMode: false,
+    fs: {
+      strict: false,
+    },
+    historyApiFallback: true,
+  },
+  preview: {
+    historyApiFallback: true,
+  },
   build: {
     rollupOptions: {
       input: {
@@ -13,4 +23,31 @@ export default defineConfig({
       },
     },
   },
+  plugins: [
+    {
+      name: 'admin-routes',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (!req.url) return next();
+
+          if (req.url === '/admin' || req.url === '/admin/') {
+            req.url = '/admin-login.html';
+            return next();
+          }
+
+          if (req.url === '/admin-login' || req.url === '/admin-login/') {
+            req.url = '/admin-login.html';
+            return next();
+          }
+
+          if (req.url === '/admin/painel' || req.url === '/admin/painel/') {
+            req.url = '/admin.html';
+            return next();
+          }
+
+          next();
+        });
+      },
+    },
+  ],
 })
